@@ -4,7 +4,6 @@ pipelines:
     - step:
         name: "Build and Test"
         script:
-          - zip keepershomeapi.zip application.py requirements.txt
           - zip keepershomeapi.zip application.py requirements.txt db model
           - pipe: atlassian/aws-elasticbeanstalk-deploy:0.2.3
             variables:
