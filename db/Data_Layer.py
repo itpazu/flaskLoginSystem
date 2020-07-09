@@ -35,6 +35,7 @@ class DataLayer:
 
 
     def __init__(self, bcrypt, client):
+
         self.__client = client
         self.__db = self.__client['keeperHome']
         self.bcrypt = bcrypt

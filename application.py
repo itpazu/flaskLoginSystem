@@ -4,13 +4,15 @@ from flask_cors import CORS
 import os
 from db.Data_Layer import DataLayer
 from flask_bcrypt import Bcrypt
-from decouple import config
+from dotenv import load_dotenv
+
+
+load_dotenv()
 application = Flask(__name__)
 CORS(application)
 bcrypt = Bcrypt(application)
-
-__client = pymongo.MongoClient('10.150.54.176:27017', 27017, username=os.environ['USER_NAME'], password=os.environ['PASSWORD'])
-# __client = pymongo.MongoClient('10.150.54.176:27017', 27017, username=config('USER_NAME'), password=config('PASSWORD'))
+__client = pymongo.MongoClient('10.150.54.176:27017', 27017, username=os.getenv("USER_NAME"),
+                               password=os.getenv("PASSWORD"))
 
 dataLayer = DataLayer(bcrypt, __client)
 
