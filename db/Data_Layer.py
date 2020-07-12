@@ -154,6 +154,20 @@ class DataLayer:
         except Exception as e:
             print(e)
 
+    def change_password(self, user_name):
+        password = self.bcrypt.generate_password_hash(request.get_json()['password']).decode('utf-8')
+        try:
+            if self.__db.Users.find_one({"username": user_name}):
+                self.__db.Users.find_one_and_update({"username": user_name}, {"$set": {"password": password,
+                                                                                       "last_update_time":
+                                                                                           User.updated_at()}})
+                changed_password = {'status': 'The password has been changed!'}
+            else:
+                changed_password = {'status': 'The user does not exist!'}
+            return changed_password
+        except Exception as e:
+            print(e)
+
     def __init__(self, bcrypt, client):
         self.__client = client
         self.__db = self.__client['keeperHome']

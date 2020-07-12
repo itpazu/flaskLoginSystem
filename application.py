@@ -91,6 +91,13 @@ def change_user_id(user_name):
     return resp
 
 
+@application.route('/change_password/<string:user_name>', methods=["POST"])
+def change_password(user_name):
+    changed_password = dataLayer.change_password(user_name)
+    resp = json.dumps(changed_password, default=str), 200, {"Content-Type": "application/json"}
+    return resp
+
+
 if __name__ == "__main__":
     port = os.environ.get('PORT')
     if port:
