@@ -32,6 +32,29 @@ class DataLayer:
             added_user = {'status': 'The user has been added!'}
         return added_user
 
+    def login(self):
+        email = request.get_json()['email']
+        password = request.get_json()['password']
+
+        response = self.__db.Users.find_one({"email": email})
+
+        if response:
+            if bcrypt.check_password_hash(response['password'], password):
+                access_token = create_access_token(identity={
+                    'user_id': str(response['user_id']),
+                    'first_name': response['first_name'],
+                    'last_name': response['last_name'],
+                    'email': response['email'],
+                    'username': response['username'],
+                    'admin': response['admin']
+                })
+                result = jsonify({'token': access_token})
+            else:
+                result = jsonify({"error": "Invalid username or password!"})
+        else:
+            result = jsonify({"result": "No results found"})
+        return result
+
     def delete_user(self, user_name):
         try:
             if self.__db.Users.find_one({"username": user_name}):

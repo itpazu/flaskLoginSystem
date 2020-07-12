@@ -35,6 +35,13 @@ def add_user():
     return resp
 
 
+@application.route('/login', methods=["POST"])
+def login():
+    logged_in_user = dataLayer.login()
+    resp = json.dumps(logged_in_user, default=str), 200, {"Content-Type": "application/json"}
+    return resp
+
+
 @application.route('/delete_user/<string:user_name>', methods=["DELETE"])
 def delete_user(user_name):
     deleted_user = dataLayer.delete_user(user_name)
