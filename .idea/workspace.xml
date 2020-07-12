@@ -2,10 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="21bde180-7909-4e7e-81e5-66bcacadf017" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/Util.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/Validator.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/application.py" beforeDir="false" afterPath="$PROJECT_DIR$/application.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/db/Data_Layer.py" beforeDir="false" afterPath="$PROJECT_DIR$/db/Data_Layer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -85,24 +86,72 @@
       <option name="presentableId" value="Default" />
       <updated>1594290255664</updated>
     </task>
+    <task id="LOCAL-00001" summary="-&quot;with yml&quot;">
+      <created>1594302882358</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1594302882358</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="-&quot;with yml&quot;" />
+    <option name="LAST_COMMIT_MESSAGE" value="-&quot;with yml&quot;" />
+  </component>
   <component name="WindowStateProjectService">
-    <state width="1515" height="210" key="GridCell.Tab.0.bottom" timestamp="1594302139746">
+    <state x="424" y="8" key="CommitChangelistDialog2" timestamp="1594556784395">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1515" height="210" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1594302139746" />
-    <state width="1515" height="210" key="GridCell.Tab.0.center" timestamp="1594302139746">
+    <state x="424" y="8" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1594556784395" />
+    <state width="1515" height="249" key="GridCell.Tab.0.bottom" timestamp="1594556733117">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1515" height="210" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1594302139746" />
-    <state width="1515" height="210" key="GridCell.Tab.0.left" timestamp="1594302139746">
+    <state width="1515" height="249" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1594556733117" />
+    <state width="1515" height="249" key="GridCell.Tab.0.center" timestamp="1594556733116">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1515" height="210" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1594302139746" />
-    <state width="1515" height="210" key="GridCell.Tab.0.right" timestamp="1594302139746">
+    <state width="1515" height="249" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1594556733116" />
+    <state width="1515" height="249" key="GridCell.Tab.0.left" timestamp="1594556733116">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1515" height="210" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1594302139746" />
+    <state width="1515" height="249" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1594556733116" />
+    <state width="1515" height="249" key="GridCell.Tab.0.right" timestamp="1594556733116">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1515" height="249" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1594556733116" />
+    <state width="1515" height="231" key="GridCell.Tab.1.bottom" timestamp="1594556221454">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1515" height="231" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1594556221454" />
+    <state width="1515" height="231" key="GridCell.Tab.1.center" timestamp="1594556221454">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1515" height="231" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1594556221454" />
+    <state width="1515" height="231" key="GridCell.Tab.1.left" timestamp="1594556221454">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1515" height="231" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1594556221454" />
+    <state width="1515" height="231" key="GridCell.Tab.1.right" timestamp="1594556221454">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1515" height="231" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1594556221454" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/application.py</url>
+          <line>59</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/application.py</url>
+          <line>26</line>
+          <option name="timeStamp" value="7" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>
