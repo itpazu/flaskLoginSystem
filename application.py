@@ -30,7 +30,7 @@ def token_required(f):
             try:
                 user_id = content['user_id']
             except Exception as error:
-                raise ValueError('id is missing!!! ')
+                raise ValueError('{} data is missing in the request'.format(str(error)))
 
             dataLayer.authenticate_user(user_id, token)
 
@@ -59,15 +59,18 @@ def get_doc(user_name):
     return resp
 
 
-@application.route('/login')
+@application.route('/login', methods=['GET', 'POST'])
 def log_in():
 
     try:
         content = request.json
-        user_name = content['username']
-        password = content['password']
+        try:
+            email = content['email']
+            password = content['password']
+        except Exception as error:
+            raise ValueError('{}, data is missing in the request'.format(str(error)))
 
-        execute_login = dataLayer.log_user(user_name, password)
+        execute_login = dataLayer.log_user(email, password)
         return json.dumps(execute_login, default=str), 200, {"Content-Type": "application/json"}
 
     except Exception as error:

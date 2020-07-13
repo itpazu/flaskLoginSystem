@@ -5,9 +5,9 @@ import jwt
 
 class DataLayer:
 
-    def get_doc_by_user_name(self, user_name):
+    def get_doc_by_email(self, email):
 
-        user_dict = self.__db.Users.find_one({"username": user_name})
+        user_dict = self.__db.Users.find_one({"email": email})
         if user_dict:
             return user_dict
         else:
@@ -40,9 +40,9 @@ class DataLayer:
             added_user = {'status': 'The user has been added!'}
         return added_user
 
-    def log_user(self, user_name, password):
+    def log_user(self, email, password):
 
-        verify_user_exsits = self.get_doc_by_user_name(user_name)
+        verify_user_exsits = self.get_doc_by_email(email)
 
         if verify_user_exsits is None:
             raise ValueError('email does not exist in db')
