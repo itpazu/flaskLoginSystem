@@ -9,7 +9,6 @@ from decouple import config
 from functools import wraps
 
 
-
 load_dotenv()
 application = Flask(__name__)
 CORS(application)
@@ -46,6 +45,7 @@ def token_required(f):
 
     return decorated
 
+
 @application.route('/')
 @token_required
 def say_hello():
@@ -61,7 +61,6 @@ def get_doc(user_name):
 
 @application.route('/login', methods=['GET', 'POST'])
 def log_in():
-
     try:
         content = request.json
         try:
@@ -77,13 +76,11 @@ def log_in():
         return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
 
 
-
 @application.route('/add_user', methods=["POST"])
 def add_user():
     added_user = dataLayer.add_user()
     resp = json.dumps(added_user, default=str), 200, {"Content-Type": "application/json"}
     return resp
-
 
 
 @application.route('/delete_user/<string:user_name>', methods=["DELETE"])

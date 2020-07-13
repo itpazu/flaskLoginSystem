@@ -1,0 +1,50 @@
+image: atlassian/default-image:2
+pipelines:
+  default:
+    - step:
+        name: "Build and Test"
+        script:
+          - model="model"
+          - db="db"
+          - zip keepershomeapi.zip application.py requirements.txt $db $model
+          - pipe: atlassian/aws-elasticbeanstalk-deploy:0.2.3
+            variables:
+              AWS_ACCESS_KEY_ID: 'AKIAZEMZYKPMIHYCDKX3'
+              AWS_SECRET_ACCESS_KEY: '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'
+              AWS_DEFAULT_REGION: 'eu-central-1'
+              APPLICATION_NAME: 'keepers-home-staging'
+              COMMAND: 'upload-only'
+              ZIP_FILE: 'keepershomeapi.zip'
+              S3_BUCKET: 'keepershomeapi-elasticbeanstalk-deployment'
+              VERSION_LABEL: 'deploy-$BITBUCKET_BUILD_NUMBER-multiple'
+    - step:
+        name: "Deploy to Staging"
+        deployment: staging
+        script:
+          - echo "Deployment!"
+          - pipe: atlassian/aws-elasticbeanstalk-deploy:0.2.3
+            variables:
+              AWS_ACCESS_KEY_ID: 'AKIAZEMZYKPMIHYCDKX3'
+              AWS_SECRET_ACCESS_KEY: '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'
+              AWS_DEFAULT_REGION: 'eu-central-1'
+              APPLICATION_NAME: 'keepers-home-staging'
+              COMMAND: 'deploy-only'
+              VERSION_LABEL: 'deploy-$BITBUCKET_BUILD_NUMBER-multiple'
+              ENVIRONMENT_NAME: 'KeepersHomeStaging-env'
+              WAIT: 'true'
+    - step:
+        name: "Deploy to Production"
+        deployment: production
+        trigger: manual
+        script:
+          - echo "Deployment to Production!"
+          - pipe: atlassian/aws-elasticbeanstalk-deploy:0.2.3
+            variables:
+              AWS_ACCESS_KEY_ID: 'AKIAZEMZYKPMIHYCDKX3'
+              AWS_SECRET_ACCESS_KEY: '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'
+              AWS_DEFAULT_REGION: 'eu-central-1'
+              APPLICATION_NAME: 'keepers-home-staging'
+              COMMAND: 'deploy-only'
+              VERSION_LABEL: 'deploy-$BITBUCKET_BUILD_NUMBER-multiple'
+              ENVIRONMENT_NAME: 'KeepersHomeStaging-env'
+              WAIT: 'true'
