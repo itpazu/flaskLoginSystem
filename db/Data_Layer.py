@@ -57,6 +57,7 @@ class DataLayer:
                 generated_token = encode_token(user_id, db_password)
                 self.store_token(user_id, generated_token)
                 get_user_dict = self.get_doc_by_user_id(user_id)
+
                 return get_user_dict
 
             raise ValueError('password is incorrect')

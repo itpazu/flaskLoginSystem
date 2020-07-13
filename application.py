@@ -52,14 +52,7 @@ def say_hello():
     return 'HELLO KEEPER HOME', 200, {"Content-Type": "application/json"}
 
 
-@application.route('/get_doc/<string:user_name>')
-def get_doc(user_name):
-    user_dict = dataLayer.get_doc_by_user_name(user_name)
-    resp = json.dumps(user_dict, default=str), 200, {"Content-Type": "application/json"}
-    return resp
-
-
-@application.route('/login', methods=['GET', 'POST'])
+@application.route('/login', methods=['POST', 'GET'])
 def log_in():
     try:
         content = request.json
@@ -70,7 +63,12 @@ def log_in():
             raise ValueError('{}, data is missing in the request'.format(str(error)))
 
         execute_login = dataLayer.log_user(email, password)
-        return json.dumps(execute_login, default=str), 200, {"Content-Type": "application/json"}
+        token = execute_login["token"]
+        user_id = execute_login["user_id"]
+
+        return json.dumps({"user_id": user_id}, default=str), 200,  {"Content-Type": "application/json",
+                                                                     "Access-Control-Expose-Headers": "token",
+                                                                    "token": token}
 
     except Exception as error:
         return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
