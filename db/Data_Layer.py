@@ -24,7 +24,6 @@ class DataLayer:
     def add_user(self):
         first_name = request.get_json()['first_name']
         last_name = request.get_json()['last_name']
-        username = request.get_json()['username']
         email = request.get_json()['email']
         admin = request.get_json()['admin']
         user_id = request.get_json()['user_id']
@@ -36,24 +35,24 @@ class DataLayer:
         elif self.__db.Users.find_one({"email": email}) and self.__db.Users.find_one({"user_id": user_id}):
             raise ValueError('The id number and email are already in the system!')
         else:
-            new_user = User(user_id, last_name, first_name, username, email, password, admin)
+            new_user = User(user_id, last_name, first_name, email, password, admin)
             self.__db.Users.insert_one(new_user.__dict__)
             added_user = {'status': 'The user has been added!'}
             return added_user
 
     def log_user(self, email, password):
 
-        verify_user_exsits = self.get_doc_by_email(email)
+        verify_user_exists = self.get_doc_by_email(email)
 
-        if verify_user_exsits is None:
+        if verify_user_exists is None:
             raise ValueError('email does not exist in db')
 
         else:
-            db_password = verify_user_exsits["password"]
+            db_password = verify_user_exists["password"]
             compare_pass = self.match_password(db_password, password)
 
             if compare_pass:
-                user_id = str(verify_user_exsits['user_id'])
+                user_id = str(verify_user_exists['user_id'])
                 generated_token = encode_token(user_id, db_password)
                 self.store_token(user_id, generated_token)
                 get_user_dict = self.get_doc_by_user_id(user_id)
@@ -95,24 +94,24 @@ class DataLayer:
         store_token = self.__db.Users.update({"user_id": user_id}, {"$set": {"token": token}})
         return store_token
 
-    def delete_user(self, user_name):
+    def delete_user(self, user_id):
         try:
-            if self.__db.Users.find_one({"username": user_name}):
-                self.__db.Users.delete_one({"username": user_name})
+            if self.__db.Users.find_one({"user_id": user_id}):
+                self.__db.Users.delete_one({"user_id": user_id})
                 users = {"status": 'The user has been deleted!'}
                 return users
             else:
-                raise ValueError('The username is not in the system!')
+                raise ValueError('The user is not in the system!')
         except ValueError as error:
             raise error
 
-    def make_admin(self, user_name):
+    def make_admin(self, user_id):
         try:
-            if self.__db.Users.find_one({"username": user_name}):
-                if self.__db.Users.find_one({"username": user_name, "admin": False}):
-                    self.__db.Users.find_one_and_update({"username": user_name}, {"$set": {"admin": True,
-                                                                                           "last_update_time":
-                                                                                               User.updated_at()}})
+            if self.__db.Users.find_one({"user_id": user_id}):
+                if self.__db.Users.find_one({"user_id": user_id, "admin": False}):
+                    self.__db.Users.find_one_and_update({"user_id": user_id}, {"$set": {"admin": True,
+                                                                                        "last_update_time":
+                                                                                            User.updated_at()}})
                     added_admin = {'status': 'The user is now an admin!'}
                     return added_admin
                 else:
@@ -122,15 +121,15 @@ class DataLayer:
         except ValueError as error:
             raise error
 
-    def demote_admin(self, user_name):
+    def demote_admin(self, user_id):
         try:
-            if self.__db.Users.find_one({"username": user_name}):
-                if self.__db.Users.find_one({"username": user_name, "admin": True}):
-                    self.__db.Users.find_one_and_update({"username": user_name}, {"$set": {"admin": False,
-                                                                                           "last_update_time":
-                                                                                               User.updated_at()}})
-                    added_admin = {'status': 'The user is no longer an admin!'}
-                    return added_admin
+            if self.__db.Users.find_one({"user_id": user_id}):
+                if self.__db.Users.find_one({"user_id": user_id, "admin": True}):
+                    self.__db.Users.find_one_and_update({"user_id": user_id}, {"$set": {"admin": False,
+                                                                                        "last_update_time":
+                                                                                            User.updated_at()}})
+                    removed_admin = {'status': 'The user is no longer an admin!'}
+                    return removed_admin
                 else:
                     raise ValueError('The user is not an admin!')
             else:
@@ -138,13 +137,13 @@ class DataLayer:
         except ValueError as error:
             raise error
 
-    def change_first_name(self, user_name):
+    def change_first_name(self, user_id):
         first_name = request.get_json()['first_name']
         try:
-            if self.__db.Users.find_one({"username": user_name}):
-                self.__db.Users.find_one_and_update({"username": user_name}, {"$set": {"first_name": first_name,
-                                                                                       "last_update_time":
-                                                                                           User.updated_at()}})
+            if self.__db.Users.find_one({"user_id": user_id}):
+                self.__db.Users.find_one_and_update({"user_id": user_id}, {"$set": {"first_name": first_name,
+                                                                                    "last_update_time":
+                                                                                        User.updated_at()}})
                 changed_name = {'status': 'The first name has been changed!'}
                 return changed_name
             else:
@@ -152,13 +151,13 @@ class DataLayer:
         except ValueError as error:
             raise error
 
-    def change_last_name(self, user_name):
+    def change_last_name(self, user_id):
         last_name = request.get_json()['last_name']
         try:
-            if self.__db.Users.find_one({"username": user_name}):
-                self.__db.Users.find_one_and_update({"username": user_name}, {"$set": {"first_name": last_name,
-                                                                                       "last_update_time":
-                                                                                           User.updated_at()}})
+            if self.__db.Users.find_one({"user_id": user_id}):
+                self.__db.Users.find_one_and_update({"user_id": user_id}, {"$set": {"first_name": last_name,
+                                                                                    "last_update_time":
+                                                                                        User.updated_at()}})
                 changed_name = {'status': 'The last name has been changed!'}
                 return changed_name
             else:
@@ -166,14 +165,14 @@ class DataLayer:
         except ValueError as error:
             raise error
 
-    def change_email(self, user_name):
+    def change_email(self, user_id):
         email = request.get_json()['email']
         try:
-            if self.__db.Users.find_one({"username": user_name}):
+            if self.__db.Users.find_one({"user_id": user_id}):
                 if self.__db.Users.find({"$not": {"email": email}}):
-                    self.__db.Users.find_one_and_update({"username": user_name}, {"$set": {"email": email,
-                                                                                           "last_update_time":
-                                                                                               User.updated_at()}})
+                    self.__db.Users.find_one_and_update({"user_id": user_id}, {"$set": {"email": email,
+                                                                                        "last_update_time":
+                                                                                            User.updated_at()}})
                     changed_email = {'status': 'The email has been changed!'}
                     return changed_email
                 else:
@@ -183,31 +182,14 @@ class DataLayer:
         except ValueError as error:
             raise error
 
-    def change_username(self, email):
-        username = request.get_json()['username']
-        try:
-            if self.__db.Users.find_one({"email": email}):
-                if self.__db.Users.find({"$not": {"username": username}}):
-                    self.__db.Users.find_one_and_update({"email": email}, {"$set": {"username": username,
-                                                                                    "last_update_time":
-                                                                                        User.updated_at()}})
-                    changed_username = {'status': 'The username has been changed!'}
-                    return changed_username
-                else:
-                    raise ValueError('The username is already in use!')
-            else:
-                raise ValueError('The email does not exist!')
-        except ValueError as error:
-            raise error
-
-    def change_user_id(self, user_name):
+    def change_user_id(self, email):
         user_id = request.get_json()['user_id']
         try:
-            if self.__db.Users.find_one({"username": user_name}):
+            if self.__db.Users.find_one({"email": email}):
                 if self.__db.Users.find({"$not": {"user_id": user_id}}):
-                    self.__db.Users.find_one_and_update({"username": user_name}, {"$set": {"user_id": user_id,
-                                                                                           "last_update_time":
-                                                                                               User.updated_at()}})
+                    self.__db.Users.find_one_and_update({"email": email}, {"$set": {"user_id": user_id,
+                                                                                    "last_update_time":
+                                                                                        User.updated_at()}})
                     changed_username = {'status': 'The user id has been changed!'}
                     return changed_username
                 else:
@@ -217,13 +199,13 @@ class DataLayer:
         except ValueError as error:
             raise error
 
-    def change_password(self, user_name):
+    def change_password(self, user_id):
         password = self.encrypt_pass(request.get_json()['password'])
         try:
-            if self.__db.Users.find_one({"username": user_name}):
-                self.__db.Users.find_one_and_update({"username": user_name}, {"$set": {"password": password,
-                                                                                       "last_update_time":
-                                                                                           User.updated_at()}})
+            if self.__db.Users.find_one({"user_id": user_id}):
+                self.__db.Users.find_one_and_update({"user_id": user_id}, {"$set": {"password": password,
+                                                                                    "last_update_time":
+                                                                                        User.updated_at()}})
                 changed_password = {'status': 'The password has been changed!'}
                 return changed_password
             else:
