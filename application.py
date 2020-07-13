@@ -21,24 +21,10 @@ def say_hello():
     return 'HELLO KEEPER HOME', 200, {"Content-Type": "application/json"}
 
 
-@application.route('/get_doc/<string:user_name>')
-def get_doc(user_name):
-    user_dict = dataLayer.get_doc(user_name)
-    resp = json.dumps(user_dict, default=str), 200, {"Content-Type": "application/json"}
-    return resp
-
-
 @application.route('/add_user', methods=["POST"])
 def add_user():
     added_user = dataLayer.add_user()
     resp = json.dumps(added_user, default=str), 200, {"Content-Type": "application/json"}
-    return resp
-
-
-@application.route('/login', methods=["POST"])
-def login():
-    logged_in_user = dataLayer.login()
-    resp = json.dumps(logged_in_user, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
 

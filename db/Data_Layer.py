@@ -4,14 +4,6 @@ from models.user import User
 
 class DataLayer:
 
-    def get_doc(self, user_name):
-        user_dict = self.__db.Users.find_one({"username": user_name})
-        if user_dict:
-            return user_dict
-        else:
-            resp = 'No such user name exists!'
-        return resp
-
     def add_user(self):
         first_name = request.get_json()['first_name']
         last_name = request.get_json()['last_name']
@@ -19,52 +11,37 @@ class DataLayer:
         email = request.get_json()['email']
         admin = request.get_json()['admin']
         user_id = request.get_json()['user_id']
-        password = self.bcrypt.generate_password_hash(request.get_json()['password']).decode('utf-8')
+        password = self.encrypt_pass(request.get_json()['password'])
         if self.__db.Users.find_one({"email": email}):
-            added_user = {'status': 'The email is already in the system!'}
+            raise ValueError('The email is already in the system!')
         elif self.__db.Users.find_one({"user_id": user_id}):
-            added_user = {'status': 'The id number is already in the system!'}
+            raise ValueError('The id number is already in the system!')
         elif self.__db.Users.find_one({"email": email}) and self.__db.Users.find_one({"user_id": user_id}):
-            added_user = {'status': 'The id number and email are already in the system!'}
+            raise ValueError('The id number and email are already in the system!')
         else:
             new_user = User(user_id, last_name, first_name, username, email, password, admin)
             self.__db.Users.insert_one(new_user.__dict__)
             added_user = {'status': 'The user has been added!'}
-        return added_user
+            return added_user
 
-    def login(self):
-        email = request.get_json()['email']
-        password = request.get_json()['password']
+    def encrypt_pass(self, password):
+        return self.bcrypt.generate_password_hash(password).decode('utf-8')
 
-        response = self.__db.Users.find_one({"email": email})
-
-        if response:
-            if bcrypt.check_password_hash(response['password'], password):
-                access_token = create_access_token(identity={
-                    'user_id': str(response['user_id']),
-                    'first_name': response['first_name'],
-                    'last_name': response['last_name'],
-                    'email': response['email'],
-                    'username': response['username'],
-                    'admin': response['admin']
-                })
-                result = jsonify({'token': access_token})
-            else:
-                result = jsonify({"error": "Invalid username or password!"})
-        else:
-            result = jsonify({"result": "No results found"})
-        return result
+    def __init__(self, bcrypt, client):
+        self.__client = client
+        self.__db = self.__client['keeperHome']
+        self.bcrypt = bcrypt
 
     def delete_user(self, user_name):
         try:
             if self.__db.Users.find_one({"username": user_name}):
                 self.__db.Users.delete_one({"username": user_name})
                 users = {"status": 'The user has been deleted!'}
+                return users
             else:
-                users = {"status": 'The username is not in the system!'}
-            return users
-        except Exception as e:
-            print(e)
+                raise ValueError('The username is not in the system!')
+        except ValueError as error:
+            raise error
 
     def make_admin(self, user_name):
         try:
@@ -74,13 +51,13 @@ class DataLayer:
                                                                                            "last_update_time":
                                                                                                User.updated_at()}})
                     added_admin = {'status': 'The user is now an admin!'}
+                    return added_admin
                 else:
-                    added_admin = {'status': 'The user is already an admin!'}
+                    raise ValueError('The user is already an admin!')
             else:
-                added_admin = {'status': 'The user does not exist!'}
-            return added_admin
-        except Exception as e:
-            print(e)
+                raise ValueError('The user does not exist!')
+        except ValueError as error:
+            raise error
 
     def demote_admin(self, user_name):
         try:
@@ -90,13 +67,13 @@ class DataLayer:
                                                                                            "last_update_time":
                                                                                                User.updated_at()}})
                     added_admin = {'status': 'The user is no longer an admin!'}
+                    return added_admin
                 else:
-                    added_admin = {'status': 'The user is not an admin!'}
+                    raise ValueError('The user is not an admin!')
             else:
-                added_admin = {'status': 'The user does not exist!'}
-            return added_admin
-        except Exception as e:
-            print(e)
+                raise ValueError('The user does not exist!')
+        except ValueError as error:
+            raise error
 
     def change_first_name(self, user_name):
         first_name = request.get_json()['first_name']
@@ -106,11 +83,11 @@ class DataLayer:
                                                                                        "last_update_time":
                                                                                            User.updated_at()}})
                 changed_name = {'status': 'The first name has been changed!'}
+                return changed_name
             else:
-                changed_name = {'status': 'The user does not exist!'}
-            return changed_name
-        except Exception as e:
-            print(e)
+                raise ValueError('The user does not exist!')
+        except ValueError as error:
+            raise error
 
     def change_last_name(self, user_name):
         last_name = request.get_json()['last_name']
@@ -120,11 +97,11 @@ class DataLayer:
                                                                                        "last_update_time":
                                                                                            User.updated_at()}})
                 changed_name = {'status': 'The last name has been changed!'}
+                return changed_name
             else:
-                changed_name = {'status': 'The user does not exist!'}
-            return changed_name
-        except Exception as e:
-            print(e)
+                raise ValueError('The user does not exist!')
+        except ValueError as error:
+            raise error
 
     def change_email(self, user_name):
         email = request.get_json()['email']
@@ -135,13 +112,13 @@ class DataLayer:
                                                                                            "last_update_time":
                                                                                                User.updated_at()}})
                     changed_email = {'status': 'The email has been changed!'}
+                    return changed_email
                 else:
-                    changed_email = {'status': 'This email is already in use!'}
+                    raise ValueError('This email is already in use!')
             else:
-                changed_email = {'status': 'The user does not exist!'}
-            return changed_email
-        except Exception as e:
-            print(e)
+                raise ValueError('The user does not exist!')
+        except ValueError as error:
+            raise error
 
     def change_username(self, email):
         username = request.get_json()['username']
@@ -152,13 +129,13 @@ class DataLayer:
                                                                                     "last_update_time":
                                                                                         User.updated_at()}})
                     changed_username = {'status': 'The username has been changed!'}
+                    return changed_username
                 else:
-                    changed_username = {'status': 'The username is already in use!'}
+                    raise ValueError('The username is already in use!')
             else:
-                changed_username = {'status': 'The email does not exist!'}
-            return changed_username
-        except Exception as e:
-            print(e)
+                raise ValueError('The email does not exist!')
+        except ValueError as error:
+            raise error
 
     def change_user_id(self, user_name):
         user_id = request.get_json()['user_id']
@@ -169,29 +146,24 @@ class DataLayer:
                                                                                            "last_update_time":
                                                                                                User.updated_at()}})
                     changed_username = {'status': 'The user id has been changed!'}
+                    return changed_username
                 else:
-                    changed_username = {'status': 'The user id is already in use!'}
+                    raise ValueError('The user id is already in use!')
             else:
-                changed_username = {'status': 'The user does not exist!'}
-            return changed_username
-        except Exception as e:
-            print(e)
+                raise ValueError('The user does not exist!')
+        except ValueError as error:
+            raise error
 
     def change_password(self, user_name):
-        password = self.bcrypt.generate_password_hash(request.get_json()['password']).decode('utf-8')
+        password = self.encrypt_pass(request.get_json()['password'])
         try:
             if self.__db.Users.find_one({"username": user_name}):
                 self.__db.Users.find_one_and_update({"username": user_name}, {"$set": {"password": password,
                                                                                        "last_update_time":
                                                                                            User.updated_at()}})
                 changed_password = {'status': 'The password has been changed!'}
+                return changed_password
             else:
-                changed_password = {'status': 'The user does not exist!'}
-            return changed_password
-        except Exception as e:
-            print(e)
-
-    def __init__(self, bcrypt, client):
-        self.__client = client
-        self.__db = self.__client['keeperHome']
-        self.bcrypt = bcrypt
+                raise ValueError('The user does not exist!')
+        except ValueError as error:
+            raise error
