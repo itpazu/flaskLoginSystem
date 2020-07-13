@@ -52,13 +52,6 @@ def say_hello():
     return 'HELLO KEEPER HOME', 200, {"Content-Type": "application/json"}
 
 
-@application.route('/get_doc/<string:user_name>')
-def get_doc(user_name):
-    user_dict = dataLayer.get_doc_by_user_name(user_name)
-    resp = json.dumps(user_dict, default=str), 200, {"Content-Type": "application/json"}
-    return resp
-
-
 @application.route('/login', methods=['GET', 'POST'])
 def log_in():
     try:
@@ -83,65 +76,58 @@ def add_user():
     return resp
 
 
-@application.route('/delete_user/<string:user_name>', methods=["DELETE"])
-def delete_user(user_name):
-    deleted_user = dataLayer.delete_user(user_name)
+@application.route('/delete_user/<string:user_id>', methods=["DELETE"])
+def delete_user(user_id):
+    deleted_user = dataLayer.delete_user(user_id)
     resp = json.dumps(deleted_user, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
 
-@application.route('/make_admin/<string:user_name>', methods=["POST"])
-def make_admin(user_name):
-    new_admin = dataLayer.make_admin(user_name)
+@application.route('/make_admin/<string:user_id>', methods=["POST"])
+def make_admin(user_id):
+    new_admin = dataLayer.make_admin(user_id)
     resp = json.dumps(new_admin, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
 
-@application.route('/demote_admin/<string:user_name>', methods=["POST"])
-def demote_admin(user_name):
-    demoted_admin = dataLayer.demote_admin(user_name)
+@application.route('/demote_admin/<string:user_id>', methods=["POST"])
+def demote_admin(user_id):
+    demoted_admin = dataLayer.demote_admin(user_id)
     resp = json.dumps(demoted_admin, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
 
-@application.route('/change_first_name/<string:user_name>', methods=["POST"])
-def change_first_name(user_name):
-    changed_name = dataLayer.change_first_name(user_name)
+@application.route('/change_first_name/<string:user_id>', methods=["POST"])
+def change_first_name(user_id):
+    changed_name = dataLayer.change_first_name(user_id)
     resp = json.dumps(changed_name, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
 
-@application.route('/change_last_name/<string:user_name>', methods=["POST"])
-def change_last_name(user_name):
-    changed_name = dataLayer.change_last_name(user_name)
+@application.route('/change_last_name/<string:user_id>', methods=["POST"])
+def change_last_name(user_id):
+    changed_name = dataLayer.change_last_name(user_id)
     resp = json.dumps(changed_name, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
 
-@application.route('/change_email/<string:user_name>', methods=["POST"])
-def change_email(user_name):
-    changed_email = dataLayer.change_email(user_name)
+@application.route('/change_email/<string:user_id>', methods=["POST"])
+def change_email(user_id):
+    changed_email = dataLayer.change_email(user_id)
     resp = json.dumps(changed_email, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
 
-@application.route('/change_username/<string:email>', methods=["POST"])
-def change_username(email):
-    changed_username = dataLayer.change_username(email)
-    resp = json.dumps(changed_username, default=str), 200, {"Content-Type": "application/json"}
-    return resp
-
-
-@application.route('/change_user_id/<string:user_name>', methods=["POST"])
-def change_user_id(user_name):
-    changed_user_id = dataLayer.change_user_id(user_name)
+@application.route('/change_user_id/<string:user_id>', methods=["POST"])
+def change_user_id(user_id):
+    changed_user_id = dataLayer.change_user_id(user_id)
     resp = json.dumps(changed_user_id, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
 
-@application.route('/change_password/<string:user_name>', methods=["POST"])
-def change_password(user_name):
-    changed_password = dataLayer.change_password(user_name)
+@application.route('/change_password/<string:user_id>', methods=["POST"])
+def change_password(user_id):
+    changed_password = dataLayer.change_password(user_id)
     resp = json.dumps(changed_password, default=str), 200, {"Content-Type": "application/json"}
     return resp
 

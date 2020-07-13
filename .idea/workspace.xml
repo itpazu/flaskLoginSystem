@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="21bde180-7909-4e7e-81e5-66bcacadf017" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/bitbucket-pipelines.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/application.py" beforeDir="false" afterPath="$PROJECT_DIR$/application.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/db/Data_Layer.py" beforeDir="false" afterPath="$PROJECT_DIR$/db/Data_Layer.py" afterDir="false" />
-    </list>
+    <list default="true" id="21bde180-7909-4e7e-81e5-66bcacadf017" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -42,21 +38,11 @@
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
-      <option name="SDK_HOME" value="" />
+      <option name="SDK_HOME" value="C:\Users\DavidBador\PycharmProjects\keepers_home_api\venv\Scripts\python.exe" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
+      <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="net.ashald.envfile">
-        <option name="IS_ENABLED" value="false" />
-        <option name="IS_SUBST" value="false" />
-        <option name="IS_PATH_MACRO_SUPPORTED" value="false" />
-        <option name="IS_IGNORE_MISSING_FILES" value="false" />
-        <option name="IS_ENABLE_EXPERIMENTAL_INTEGRATIONS" value="false" />
-        <ENTRIES>
-          <ENTRY IS_ENABLED="true" PARSER="runconfig" />
-        </ENTRIES>
-      </EXTENSION>
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/application.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
@@ -72,18 +58,6 @@
       </list>
     </recent_temporary>
   </component>
-  <component name="ServiceViewManager">
-    <option name="viewStates">
-      <list>
-        <serviceView>
-          <treeState>
-            <expand />
-            <select />
-          </treeState>
-        </serviceView>
-      </list>
-    </option>
-  </component>
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -95,124 +69,45 @@
       <option name="presentableId" value="Default" />
       <updated>1594290255664</updated>
     </task>
-    <task id="LOCAL-00001" summary="Merge branch 'badors_branch'&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml&#10;#&#9;application.py&#10;#&#9;db/Data_Layer.py">
-      <created>1594561551513</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1594561551513</updated>
-    </task>
-    <task id="LOCAL-00002" summary="merged fixes">
-      <created>1594621271466</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1594621271466</updated>
-    </task>
-    <task id="LOCAL-00003" summary="eliminating username">
-      <created>1594639800290</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1594639800290</updated>
-    </task>
-    <option name="localTasksCounter" value="4" />
     <servers />
-  </component>
-  <component name="VcsManagerConfiguration">
-    <MESSAGE value="Merge branch 'badors_branch'&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml&#10;#&#9;application.py&#10;#&#9;db/Data_Layer.py" />
-    <MESSAGE value="merged fixes" />
-    <MESSAGE value="eliminating username" />
-    <option name="LAST_COMMIT_MESSAGE" value="eliminating username" />
   </component>
   <component name="WindowStateProjectService">
     <state x="351" y="0" key="#application" timestamp="1594539623164">
       <screen x="0" y="0" width="1280" height="680" />
     </state>
     <state x="351" y="0" key="#application/0.0.1280.680/-1366.0.1366.728@0.0.1280.680" timestamp="1594539623164" />
-    <state x="223" y="68" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1594562065468">
-      <screen x="0" y="0" width="1536" height="824" />
-    </state>
-    <state x="223" y="68" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1536.824@0.0.1536.824" timestamp="1594562065468" />
-    <state x="424" y="0" key="CommitChangelistDialog2" timestamp="1594639799635">
-      <screen x="0" y="0" width="1536" height="824" />
-    </state>
-    <state x="424" y="0" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1594639799635" />
     <state x="-917" y="103" key="FileChooserDialogImpl" timestamp="1594554288138">
       <screen x="-1366" y="0" width="1366" height="728" />
     </state>
     <state x="-917" y="103" key="FileChooserDialogImpl/0.0.1280.680/-1366.0.1366.728@-1366.0.1366.728" timestamp="1594554288138" />
     <state x="421" y="96" key="FileChooserDialogImpl/0.0.1280.680/-1366.0.1366.728@0.0.1280.680" timestamp="1594533842227" />
-    <state width="1515" height="181" key="GridCell.Tab.0.bottom" timestamp="1594639759453">
-      <screen x="0" y="0" width="1536" height="824" />
+    <state width="1259" height="163" key="GridCell.Tab.0.bottom" timestamp="1594546210784">
+      <screen x="0" y="0" width="1280" height="680" />
     </state>
     <state width="1345" height="163" key="GridCell.Tab.0.bottom/0.0.1280.680/-1366.0.1366.728@-1366.0.1366.728" timestamp="1594542080665" />
     <state width="1259" height="163" key="GridCell.Tab.0.bottom/0.0.1280.680/-1366.0.1366.728@0.0.1280.680" timestamp="1594546210784" />
-    <state width="1515" height="181" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1594639759453" />
-    <state width="1515" height="181" key="GridCell.Tab.0.center" timestamp="1594639759453">
-      <screen x="0" y="0" width="1536" height="824" />
+    <state width="1515" height="210" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1594302139746" />
+    <state width="1259" height="163" key="GridCell.Tab.0.center" timestamp="1594546210784">
+      <screen x="0" y="0" width="1280" height="680" />
     </state>
     <state width="1345" height="163" key="GridCell.Tab.0.center/0.0.1280.680/-1366.0.1366.728@-1366.0.1366.728" timestamp="1594542080665" />
     <state width="1259" height="163" key="GridCell.Tab.0.center/0.0.1280.680/-1366.0.1366.728@0.0.1280.680" timestamp="1594546210784" />
-    <state width="1515" height="181" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1594639759453" />
-    <state width="1515" height="181" key="GridCell.Tab.0.left" timestamp="1594639759453">
-      <screen x="0" y="0" width="1536" height="824" />
+    <state width="1515" height="210" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1594302139746" />
+    <state width="1259" height="163" key="GridCell.Tab.0.left" timestamp="1594546210784">
+      <screen x="0" y="0" width="1280" height="680" />
     </state>
     <state width="1345" height="163" key="GridCell.Tab.0.left/0.0.1280.680/-1366.0.1366.728@-1366.0.1366.728" timestamp="1594542080665" />
     <state width="1259" height="163" key="GridCell.Tab.0.left/0.0.1280.680/-1366.0.1366.728@0.0.1280.680" timestamp="1594546210784" />
-    <state width="1515" height="181" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1594639759453" />
-    <state width="1515" height="181" key="GridCell.Tab.0.right" timestamp="1594639759453">
-      <screen x="0" y="0" width="1536" height="824" />
+    <state width="1515" height="210" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1594302139746" />
+    <state width="1259" height="163" key="GridCell.Tab.0.right" timestamp="1594546210784">
+      <screen x="0" y="0" width="1280" height="680" />
     </state>
     <state width="1345" height="163" key="GridCell.Tab.0.right/0.0.1280.680/-1366.0.1366.728@-1366.0.1366.728" timestamp="1594542080665" />
     <state width="1259" height="163" key="GridCell.Tab.0.right/0.0.1280.680/-1366.0.1366.728@0.0.1280.680" timestamp="1594546210784" />
-    <state width="1515" height="181" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1594639759453" />
-    <state width="1515" height="231" key="GridCell.Tab.1.bottom" timestamp="1594563931270">
-      <screen x="0" y="0" width="1536" height="824" />
-    </state>
-    <state width="1515" height="231" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1594563931270" />
-    <state width="1515" height="231" key="GridCell.Tab.1.center" timestamp="1594563931269">
-      <screen x="0" y="0" width="1536" height="824" />
-    </state>
-    <state width="1515" height="231" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1594563931269" />
-    <state width="1515" height="231" key="GridCell.Tab.1.left" timestamp="1594563931269">
-      <screen x="0" y="0" width="1536" height="824" />
-    </state>
-    <state width="1515" height="231" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1594563931269" />
-    <state width="1515" height="231" key="GridCell.Tab.1.right" timestamp="1594563931270">
-      <screen x="0" y="0" width="1536" height="824" />
-    </state>
-    <state width="1515" height="231" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1594563931270" />
-    <state x="147" y="71" key="MergeDialog" timestamp="1594640450925">
-      <screen x="0" y="0" width="1536" height="824" />
-    </state>
-    <state x="147" y="71" key="MergeDialog/0.0.1536.824@0.0.1536.824" timestamp="1594640450925" />
-    <state x="481" y="129" key="MultipleFileMergeDialog" timestamp="1594640450932">
-      <screen x="0" y="0" width="1536" height="824" />
-    </state>
-    <state x="481" y="129" key="MultipleFileMergeDialog/0.0.1536.824@0.0.1536.824" timestamp="1594640450932" />
+    <state width="1515" height="210" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1594302139746" />
     <state x="142" y="0" key="SettingsEditor" timestamp="1594539908143">
       <screen x="0" y="0" width="1280" height="680" />
     </state>
     <state x="142" y="0" key="SettingsEditor/0.0.1280.680/-1366.0.1366.728@0.0.1280.680" timestamp="1594539908143" />
-    <state x="461" y="171" key="Vcs.Multiple.Commit.Info.Dialog.Key" timestamp="1594640363793">
-      <screen x="0" y="0" width="1536" height="824" />
-    </state>
-    <state x="461" y="171" key="Vcs.Multiple.Commit.Info.Dialog.Key/0.0.1536.824@0.0.1536.824" timestamp="1594640363793" />
-    <state x="334" y="476" key="com.intellij.ide.util.TipDialog" timestamp="1594561854885">
-      <screen x="0" y="0" width="1536" height="824" />
-    </state>
-    <state x="334" y="476" key="com.intellij.ide.util.TipDialog/0.0.1536.824@0.0.1536.824" timestamp="1594561854885" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/application.py</url>
-          <line>25</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>
