@@ -25,9 +25,14 @@ def token_required(f):
         try:
 
             content = request.json
-            user_id = content['user_id']
             token = request.headers.get('auth-token')
-            authenticate = dataLayer.authenticate_user(user_id, token)
+
+            try:
+                user_id = content['user_id']
+            except Exception as error:
+                raise ValueError('id is missing!!! ')
+
+            dataLayer.authenticate_user(user_id, token)
 
         except Exception as err:
             response = application.response_class(
@@ -59,12 +64,8 @@ def log_in():
 
     try:
         content = request.json
-
         user_name = content['username']
         password = content['password']
-
-        if not user_name or not password:
-            raise ValueError('error: missing information')
 
         execute_login = dataLayer.log_user(user_name, password)
         return json.dumps(execute_login, default=str), 200, {"Content-Type": "application/json"}
@@ -74,20 +75,12 @@ def log_in():
 
 
 
-
-
 @application.route('/add_user', methods=["POST"])
 def add_user():
     added_user = dataLayer.add_user()
     resp = json.dumps(added_user, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
-
-@application.route('/login', methods=["POST"])
-def login():
-    logged_in_user = dataLayer.login()
-    resp = json.dumps(logged_in_user, default=str), 200, {"Content-Type": "application/json"}
-    return resp
 
 
 @application.route('/delete_user/<string:user_name>', methods=["DELETE"])
