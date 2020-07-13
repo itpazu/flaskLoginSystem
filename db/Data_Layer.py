@@ -7,7 +7,6 @@ import jwt
 class DataLayer:
 
     def get_doc_by_user_name(self, user_name):
-
         user_dict = self.__db.Users.find_one({"username": user_name})
         if user_dict:
             return user_dict
@@ -43,14 +42,13 @@ class DataLayer:
 
     def log_user(self, user_name, password):
 
-        verify_user_exsits = self.get_doc_by_user_name(user_name)
+        verify_user_exists = self.get_doc_by_user_name(user_name)
 
-        if verify_user_exsits is None:
+        if verify_user_exists is None:
             raise ValueError('email does not exist in db')
 
         else:
             db_password = verify_user_exsits["password"]
-            # print(db_password)
             compare_pass = self.match_password(db_password, password)
 
             if compare_pass:
@@ -63,7 +61,6 @@ class DataLayer:
             raise ValueError('password is incorrect')
 
     def authenticate_user(self, user_id, token):
-
         user_from_db = self.get_doc_by_user_id(user_id)
         if user_from_db is None:
             raise ValueError('identification failed, user_id is either missing or incorrect')
@@ -85,9 +82,8 @@ class DataLayer:
     def encrypt_pass(self, password):
         return self.bcrypt.generate_password_hash(password).decode('utf-8')
 
-    def match_password(self, db_pass, recieved_password):
-
-        if self.bcrypt.check_password_hash(db_pass, recieved_password):
+    def match_password(self, db_pass, received_password):
+        if self.bcrypt.check_password_hash(db_pass, received_password):
             return True
         else:
             return False

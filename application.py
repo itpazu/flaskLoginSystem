@@ -28,8 +28,8 @@ def token_required(f):
 
             try:
                 user_id = content['user_id']
-            except Exception as error:
-                raise ValueError('id is missing!!! ')
+            except Exception:
+                raise ValueError('id is missing!!!')
 
             dataLayer.authenticate_user(user_id, token)
 
