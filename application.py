@@ -98,7 +98,7 @@ def log_in():
 
 @application.route('/logout', methods=['GET', 'POST'])
 @cross_origin()
-def Logout():
+def logout():
 
     response = application.response_class(
         response='logout',
@@ -177,7 +177,7 @@ def change_password(user_id):
 
 def _build_cors_preflight_response():
     response = make_response()
-    response.headers.add("Access-Control-Allow-Origin", "http://localhost:3000")
+    response.headers.add("Access-Control-Allow-Origin", "*")
     response.headers.add('Access-Control-Allow-Headers', "*")
     response.headers.add('Access-Control-Allow-Methods', "*")
     return response
