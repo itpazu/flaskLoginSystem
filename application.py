@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 
 load_dotenv()
 application = Flask(__name__)
-CORS(application, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:3000/"}})
+CORS(application, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:3000"}})
 bcrypt = Bcrypt(application)
 __client = pymongo.MongoClient('10.150.54.176:27017', 27017, username=os.getenv("USER_NAME"),
                                password=os.getenv("PASSWORD"))
@@ -41,7 +41,7 @@ def token_required(f):
                 response=json.dumps({"error": str(err)}),
                 status=401,
                 mimetype='application/json',
-                headers={'Access-Control-Allow-Origin': 'http://localhost:3000'}
+                headers={'Access-Control-Allow-Origin': '"http://localhost:3000"'}
             )
             return response
 
@@ -82,7 +82,7 @@ def log_in():
                 response=json.dumps({"user_id": user_id}),
                 status=200,
                 mimetype='application/json',
-                headers={'Access-Control-Allow-Origin': 'http://localhost:3000/'}
+                headers={'Access-Control-Allow-Origin': '"http://localhost:3000"'}
 
             )
 
@@ -101,7 +101,7 @@ def logout():
         response='logout',
         status=200,
         mimetype='application/json',
-        headers={'Access-Control-Allow-Origin': 'http://localhost:3000'}
+        headers={'Access-Control-Allow-Origin': "http://localhost:3000"}
 
     )
 
@@ -178,7 +178,8 @@ def _build_cors_preflight_response():
 
         status=200,
         mimetype='application/json',
-        headers={'Access-Control-Allow-Origin': 'http://localhost:3000/', 'Access-Control-Allow-Credentials': 'true'}
+        headers={'Access-Control-Allow-Origin': "http://localhost:3000", 'Access-Control-Allow-Credentials': 'true',
+                 'Access-Control-Allow-Headers': "Content-Type"}
 
     )
 
