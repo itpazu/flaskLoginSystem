@@ -41,7 +41,7 @@ def token_required(f):
                 response=json.dumps({"error": str(err)}),
                 status=401,
                 mimetype='application/json',
-                headers={'Access-Control-Allow-Origin': '"http://localhost:3000"'}
+                headers={'Access-Control-Allow-Origin': "http://localhost:3000"}
             )
             return response
 
@@ -82,7 +82,7 @@ def log_in():
                 response=json.dumps({"user_id": user_id}),
                 status=200,
                 mimetype='application/json',
-                headers={'Access-Control-Allow-Origin': '"http://localhost:3000"'}
+                headers={'Access-Control-Allow-Origin': "http://localhost:3000"}
 
             )
 
