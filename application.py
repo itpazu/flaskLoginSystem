@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 
 load_dotenv()
 application = Flask(__name__)
-CORS(application, supports_credentials=True, resources={r"/*": {"origins": "http://localhost"}})
+CORS(application, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:3000/"}})
 bcrypt = Bcrypt(application)
 __client = pymongo.MongoClient('10.150.54.176:27017', 27017, username=os.getenv("USER_NAME"),
                                password=os.getenv("PASSWORD"))
@@ -82,7 +82,7 @@ def log_in():
                 response=json.dumps({"user_id": user_id}),
                 status=200,
                 mimetype='application/json',
-                headers={'Access-Control-Allow-Origin': 'http://localhost'}
+                headers={'Access-Control-Allow-Origin': 'http://localhost:3000/'}
 
             )
 
@@ -176,10 +176,9 @@ def _build_cors_preflight_response():
 
     response = application.response_class(
 
-        response=json.dumps({"user_id": u'ser_id'}),
         status=200,
         mimetype='application/json',
-        headers={'Access-Control-Allow-Origin': 'http://localhost', 'Access-Control-Allow-Credentials': 'true'}
+        headers={'Access-Control-Allow-Origin': 'http://localhost:3000/', 'Access-Control-Allow-Credentials': 'true'}
 
     )
 
