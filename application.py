@@ -51,7 +51,7 @@ def token_required(f):
 
 
 @application.route('/', methods=['POST', 'GET'])
-@token_required
+# @token_required
 @cross_origin()
 def say_hello():
     return 'HELLO KEEPER HOME', 200, {"Content-Type": "application/json"}
