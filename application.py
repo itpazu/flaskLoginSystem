@@ -1,20 +1,21 @@
-from flask import Flask, json, request
+from flask import Flask, json, request, make_response
 import pymongo
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 import os
 from db.Data_Layer import DataLayer
 from flask_bcrypt import Bcrypt
 from dotenv import load_dotenv
-from decouple import config
+# from decouple import config
 from functools import wraps
+from datetime import datetime, timedelta
 
 
 load_dotenv()
 application = Flask(__name__)
-CORS(application)
+CORS(application, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:3000"}})
 bcrypt = Bcrypt(application)
-__client = pymongo.MongoClient('10.150.54.176:27017', 27017, username=config("USER_NAME"),
-                               password=config("PASSWORD"))
+__client = pymongo.MongoClient('10.150.54.176:27017', 27017, username=os.getenv("USER_NAME"),
+                               password=os.getenv("PASSWORD"))
 dataLayer = DataLayer(bcrypt, __client)
 
 
@@ -24,7 +25,9 @@ def token_required(f):
         try:
 
             content = request.json
-            token = request.headers.get('auth-token')
+            # token = request.headers.get('auth-token')
+            Cookies = request.cookies
+            token = Cookies.get('token')
 
             try:
                 user_id = content['user_id']
@@ -37,7 +40,8 @@ def token_required(f):
             response = application.response_class(
                 response=json.dumps({"error": str(err)}),
                 status=401,
-                mimetype='application/json'
+                mimetype='application/json',
+                headers={'Access-Control-Allow-Origin': 'http://localhost:3000'}
             )
             return response
 
@@ -46,33 +50,69 @@ def token_required(f):
     return decorated
 
 
-@application.route('/')
+@application.route('/', methods=['POST', 'GET'])
 @token_required
+@cross_origin()
 def say_hello():
     return 'HELLO KEEPER HOME', 200, {"Content-Type": "application/json"}
 
 
-@application.route('/login', methods=['POST', 'GET'])
+@application.route('/login', methods=['POST', 'OPTIONS'])
+@cross_origin()
 def log_in():
-    try:
-        content = request.json
+    if request.method == "OPTIONS":
+        return _build_cors_preflight_response()
+    elif request.method == "POST":
         try:
-            email = content['email']
-            password = content['password']
+            content = request.json
+            try:
+                email = content['email']
+                password = content['password']
+
+
+            except Exception as error:
+                raise ValueError('{}, data is missing in the request'.format(str(error)))
+
+            execute_login = dataLayer.log_user(email, password)
+            token = execute_login["token"]
+            user_id = execute_login["user_id"]
+
+            # return json.dumps({"user_id": user_id}, default=str), 200,  {"Content-Type": "application/json",
+            #                                                              "Access-Control-Expose-Headers": "token",
+            #                                                             "token": token}
+            response = application.response_class(
+                response=json.dumps({"user_id": user_id}),
+                status=200,
+                mimetype='application/json',
+                headers={'Access-Control-Allow-Origin': 'http://localhost:3000'}
+
+            )
+
+            response.set_cookie('token', value=token, httponly=True, domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
+                                path='/*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True, samesite='none')
+
+            return response
+
         except Exception as error:
-            raise ValueError('{}, data is missing in the request'.format(str(error)))
+            return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
 
-        execute_login = dataLayer.log_user(email, password)
-        token = execute_login["token"]
-        user_id = execute_login["user_id"]
+@application.route('/logout', methods=['GET', 'POST'])
+@cross_origin()
+def Logout():
 
-        return json.dumps({"user_id": user_id}, default=str), 200,  {"Content-Type": "application/json",
-                                                                     "Access-Control-Expose-Headers": "token",
-                                                                    "token": token}
+    response = application.response_class(
+        response='logout',
+        status=200,
+        mimetype='application/json',
+        headers={'Access-Control-Allow-Origin': 'http://localhost:3000'}
 
-    except Exception as error:
-        return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
+    )
 
+    response.set_cookie('token', value='new_token', httponly=True,
+                        domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
+                        path='/', expires=0, secure=True, samesite='none')
+
+    return response
 
 @application.route('/add_user', methods=["POST"])
 def add_user():
@@ -86,7 +126,6 @@ def delete_user(user_id):
     deleted_user = dataLayer.delete_user(user_id)
     resp = json.dumps(deleted_user, default=str), 200, {"Content-Type": "application/json"}
     return resp
-
 
 @application.route('/make_admin/<string:user_id>', methods=["POST"])
 def make_admin(user_id):
@@ -135,6 +174,13 @@ def change_password(user_id):
     changed_password = dataLayer.change_password(user_id)
     resp = json.dumps(changed_password, default=str), 200, {"Content-Type": "application/json"}
     return resp
+
+def _build_cors_preflight_response():
+    response = make_response()
+    response.headers.add("Access-Control-Allow-Origin", "http://localhost:3000")
+    response.headers.add('Access-Control-Allow-Headers', "*")
+    response.headers.add('Access-Control-Allow-Methods', "*")
+    return response
 
 
 if __name__ == "__main__":

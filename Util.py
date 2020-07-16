@@ -11,8 +11,8 @@ def encode_token(user_id, password):
             'iat': datetime.utcnow(),
             'sub': user_id
         }
-        secret_key = config('JWT_SECRET_KEY') + str(password) + str(user_id)
-        # secret_key = os.environ.get('JWT_SECRET_KEY') + str(password) + user_id
+        # secret_key = config('JWT_SECRET_KEY') + str(password) + str(user_id)
+        secret_key = os.environ.get('JWT_SECRET_KEY') + str(password) + user_id
 
         return jwt.encode(
             payload,
@@ -29,7 +29,8 @@ def decode_token(token, user_id, password):
     if token is None:
         raise ValueError('token is missing from request')
 
-    secret_key = config('JWT_SECRET_KEY') + str(password) + str(user_id)
+    # secret_key = config('JWT_SECRET_KEY') + str(password) + str(user_id)
+    secret_key = os.environ.get('JWT_SECRET_KEY') + str(password) + user_id
 
     try:
         payload = jwt.decode(token, secret_key)
