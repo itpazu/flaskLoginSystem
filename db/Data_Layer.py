@@ -2,7 +2,7 @@ from flask import request, jsonify, json
 from models.user import User
 from Util import decode_token, encode_token
 import jwt
-
+import secrets
 
 class DataLayer:
 
@@ -54,7 +54,9 @@ class DataLayer:
             if compare_pass:
                 user_id = str(verify_user_exists['user_id'])
                 generated_token = encode_token(user_id, db_password)
-                self.store_token(user_id, generated_token)
+                csrf_token = secrets.token_hex()
+
+                self.store_token(user_id, generated_token, csrf_token)
                 get_user_dict = self.get_doc_by_user_id(user_id)
 
                 return get_user_dict
@@ -90,8 +92,8 @@ class DataLayer:
         else:
             return False
 
-    def store_token(self, user_id, token):
-        store_token = self.__db.Users.update({"user_id": user_id}, {"$set": {"token": token}})
+    def store_token(self, user_id, token, csrf_token):
+        store_token = self.__db.Users.update({"user_id": user_id}, {"$set": {"token": token, 'csrf_token': csrf_token }})
         return store_token
 
     def delete_user(self, user_id):

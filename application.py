@@ -80,9 +80,9 @@ def log_in():
                 raise ValueError('{}, data is missing in the request'.format(str(error)))
 
             execute_login = dataLayer.log_user(email, password)
-            token = execute_login["token"]
+            csrf_token = execute_login["csrf_token"]
             user_id = execute_login["user_id"]
-
+            token= execute_login["token"]
             # return json.dumps({"user_id": user_id}, default=str), 200,  {"Content-Type": "application/json",
             #                                                              "Access-Control-Expose-Headers": "token",
             #                                                             "token": token}
@@ -99,6 +99,11 @@ def log_in():
 
             response.set_cookie('token', value=token, httponly=True, domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
                                 path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True, samesite='none')
+
+            response.set_cookie('xsrf-token', value=csrf_token, httponly=False,
+                                domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
+                                path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
+                                samesite='none')
 
             return response
 
