@@ -1,6 +1,6 @@
 from flask import Flask, json, request, make_response
 import pymongo
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS
 import os
 from db.Data_Layer import DataLayer
 from flask_bcrypt import Bcrypt
@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 
 load_dotenv()
 application = Flask(__name__)
-CORS(application, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:3000"}})
+CORS(application, supports_credentials=True, resources={r"/*": {"origins": "http://localhost"}})
 bcrypt = Bcrypt(application)
 __client = pymongo.MongoClient('10.150.54.176:27017', 27017, username=os.getenv("USER_NAME"),
                                password=os.getenv("PASSWORD"))
@@ -52,13 +52,11 @@ def token_required(f):
 
 @application.route('/', methods=['POST', 'GET'])
 # @token_required
-@cross_origin()
 def say_hello():
     return 'HELLO KEEPER HOME', 200, {"Content-Type": "application/json"}
 
 
 @application.route('/login', methods=['POST', 'OPTIONS'])
-@cross_origin()
 def log_in():
     if request.method == "OPTIONS":
         return _build_cors_preflight_response()
@@ -84,7 +82,7 @@ def log_in():
                 response=json.dumps({"user_id": user_id}),
                 status=200,
                 mimetype='application/json',
-                headers={'Access-Control-Allow-Origin': 'http://localhost:3000'}
+                headers={'Access-Control-Allow-Origin': 'http://localhost'}
 
             )
 
@@ -97,7 +95,6 @@ def log_in():
             return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
 
 @application.route('/logout', methods=['GET', 'POST'])
-@cross_origin()
 def logout():
 
     response = application.response_class(
@@ -176,11 +173,15 @@ def change_password(user_id):
     return resp
 
 def _build_cors_preflight_response():
-    response = make_response()
-    response.headers("Access-Control-Allow-Origin", "http://localhost:3000")
-    response.headers('Access-Control-Allow-Headers', "*")
-    response.headers('Access-Control-Allow-Methods', "*")
-    response.headers('Access-Control-Allow-Credentials', True)
+
+    response = application.response_class(
+
+        response=json.dumps({"user_id": u'ser_id'}),
+        status=200,
+        mimetype='application/json',
+        headers={'Access-Control-Allow-Origin': 'http://localhost', 'Access-Control-Allow-Credentials': 'true'}
+
+    )
 
     return response
 
