@@ -41,7 +41,7 @@ def token_required(f):
                 response=json.dumps({"error": str(err)}),
                 status=401,
                 mimetype='application/json',
-                headers={'Access-Control-Allow-Origin': "http://localhost:3000"}
+
             )
             return response
 
@@ -51,9 +51,17 @@ def token_required(f):
 
 
 @application.route('/', methods=['POST', 'GET'])
-# @token_required
-def say_hello():
-    return 'HELLO KEEPER HOME', 200, {"Content-Type": "application/json"}
+def health_check_aws():
+    return 'success', 200, {"Content-Type": "application/json"}
+
+
+@application.route('/test', methods=['POST', 'GET'])
+@token_required
+def test_route():
+    return 'HELLO KEEPER HOME', 200, {'Access-Control-Allow-Origin': "http://localhost:3000",
+                                                                            'Access-Control-Allow-Credentials': "true",
+                                                                            'Access-Control-Allow-Headers': "Content-Type"}
+
 
 
 @application.route('/login', methods=['POST', 'OPTIONS'])
@@ -82,12 +90,15 @@ def log_in():
                 response=json.dumps({"user_id": user_id}),
                 status=200,
                 mimetype='application/json',
-                headers={'Access-Control-Allow-Origin': "http://localhost:3000"}
+                headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+                         'Access-Control-Allow-Credentials': "true",
+                         'Access-Control-Allow-Headers': "Content-Type"}
 
             )
 
+
             response.set_cookie('token', value=token, httponly=True, domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
-                                path='/*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True, samesite='none')
+                                path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True, samesite='none')
 
             return response
 
@@ -178,12 +189,15 @@ def _build_cors_preflight_response():
 
         status=200,
         mimetype='application/json',
-        headers={'Access-Control-Allow-Origin': "http://localhost:3000", 'Access-Control-Allow-Credentials': 'true',
+        headers={'Access-Control-Allow-Origin': "http://localhost:3000", 'Access-Control-Allow-Credentials': "true",
                  'Access-Control-Allow-Headers': "Content-Type"}
 
     )
 
     return response
+
+
+
 
 
 if __name__ == "__main__":
