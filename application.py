@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 
 load_dotenv()
 application = Flask(__name__)
+CORS(application)
 CORS(application, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:3000"}})
 bcrypt = Bcrypt(application)
 __client = pymongo.MongoClient('10.150.54.176:27017', 27017, username=os.getenv("USER_NAME"),
@@ -23,18 +24,19 @@ def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         try:
-
             content = request.json
-            # token = request.headers.get('auth-token')
+            csrf_token = request.headers.get('Authorization')
             Cookies = request.cookies
             token = Cookies.get('token')
+            # token = request.headers.get('token')
 
             try:
                 user_id = content['user_id']
             except Exception as error:
                 raise ValueError('{} data is missing in the request'.format(str(error)))
 
-            dataLayer.authenticate_user(user_id, token)
+            dataLayer.authenticate_user(user_id, token, csrf_token)
+
 
         except Exception as err:
             response = application.response_class(
@@ -52,15 +54,18 @@ def token_required(f):
 
 @application.route('/', methods=['POST', 'GET'])
 def health_check_aws():
+
     return 'success', 200, {"Content-Type": "application/json"}
 
 
 @application.route('/test', methods=['POST', 'GET'])
 @token_required
 def test_route():
+
     return 'HELLO KEEPER HOME', 200, {'Access-Control-Allow-Origin': "http://localhost:3000",
                                                                             'Access-Control-Allow-Credentials': "true",
-                                                                            'Access-Control-Allow-Headers': "Content-Type"}
+                                                                            'Access-Control-Allow-Headers': ["Content-Type", "Authorization"]
+                                      }
 
 
 
@@ -92,18 +97,20 @@ def log_in():
                 mimetype='application/json',
                 headers={'Access-Control-Allow-Origin': "http://localhost:3000",
                          'Access-Control-Allow-Credentials': "true",
-                         'Access-Control-Allow-Headers': "Content-Type"}
+                         'Access-Control-Allow-Headers': "Content-Type",
+                         'Access-Control-Expose-Headers': "Authorization",
+                         "Authorization":  csrf_token,
+                         }
 
             )
-
 
             response.set_cookie('token', value=token, httponly=True, domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
                                 path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True, samesite='none')
 
-            response.set_cookie('xsrf-token', value=csrf_token, httponly=False,
-                                domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
-                                path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
-                                samesite='none')
+            # response.set_cookie('xsrf-token', value=csrf_token, httponly=False,
+            #                     domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com' ,
+            #                     path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
+            #                     samesite='none')
 
             return response
 

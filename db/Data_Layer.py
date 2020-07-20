@@ -63,13 +63,14 @@ class DataLayer:
 
             raise ValueError('password is incorrect')
 
-    def authenticate_user(self, user_id, token):
+    def authenticate_user(self, user_id, token, csrf_token):
 
         user_from_db = self.get_doc_by_user_id(user_id)
         if user_from_db is None:
             raise ValueError('identification failed, user_id is either missing or incorrect')
 
         pass_from_db = user_from_db['password']
+        csrf_from_db = user_from_db['csrf_token']
         decoded_token = decode_token(token, user_id, pass_from_db)
 
         try:
@@ -79,9 +80,15 @@ class DataLayer:
             raise ValueError('Signature expired. Please log in again.')
         except jwt.InvalidTokenError:
             raise ValueError('Invalid token. Please log in again.')
-
+        try:
+            if csrf_token is None:
+                raise ValueError('csrf is missing in the request)')
+            if str(csrf_token) != str(csrf_from_db):
+                raise ValueError('csrf token is invalid!')
         except ValueError as error:
             raise error
+
+
 
     def encrypt_pass(self, password):
         return self.bcrypt.generate_password_hash(password).decode('utf-8')
