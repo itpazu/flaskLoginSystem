@@ -1,14 +1,24 @@
-from flask import Flask, json, request, make_response
+from flask import Flask, json, request, make_response, render_template
 import pymongo
 from flask_cors import CORS
 import os
 from db.Data_Layer import DataLayer
 from flask_bcrypt import Bcrypt
 from dotenv import load_dotenv
-# from decouple import config
 from functools import wraps
 from datetime import datetime, timedelta
+from flask_mail import Mail, Message
 
+
+mail_settings = {
+    "MAIL_SERVER": 'smtp.gmail.com',  # using gmail's mail server
+    "MAIL_PORT": 465,
+    "MAIL_USE_TLS": False,
+    "MAIL_USE_SSL": True,
+    "MAIL_USERNAME": os.getenv('EMAIL'),  # using gmail account
+    "MAIL_PASSWORD": os.getenv('EMAIL_PASSWORD'),
+    "MAIL_DEFAULT_SENDER": ('KeepersHome', os.getenv('EMAIL'))
+}
 
 load_dotenv()
 application = Flask(__name__)
@@ -17,7 +27,10 @@ CORS(application, supports_credentials=True, resources={r"/*": {"origins": "http
 bcrypt = Bcrypt(application)
 __client = pymongo.MongoClient('10.150.54.176:27017', 27017, username=os.getenv("USER_NAME"),
                                password=os.getenv("PASSWORD"))
+application.config.update(mail_settings)
+mail = Mail(application)
 dataLayer = DataLayer(bcrypt, __client)
+
 
 
 def token_required(f):
@@ -26,9 +39,10 @@ def token_required(f):
         try:
             content = request.json
             csrf_token = request.headers.get('Authorization')
-            Cookies = request.cookies
-            token = Cookies.get('token')
-            # token = request.headers.get('token')
+            token = request.headers.get('token') #for dev only
+
+            # cookie = request.cookies          ## commented out for development only
+            # token = cookie.get('token')
 
             try:
                 user_id = content['user_id']
@@ -37,10 +51,9 @@ def token_required(f):
 
             dataLayer.authenticate_user(user_id, token, csrf_token)
 
-
         except Exception as err:
             response = application.response_class(
-                response=json.dumps({"error": str(err)}),
+                response=json.dumps({"authentication failed": 'the following error occurred:' +  str(err)}),
                 status=401,
                 mimetype='application/json',
 
@@ -52,6 +65,39 @@ def token_required(f):
     return decorated
 
 
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        try:
+            content = request.json
+            csrf_token = request.headers.get('Authorization')
+            token = request.headers.get('token')  # for dev only
+            print(token)
+            print(csrf_token)
+            # print(content['user_id'])
+            # cookie = request.cookies          ## commented out for development only
+            # token = cookie.get('token')
+
+            try:
+                user_id = content['user_id']
+            except Exception as error:
+                raise ValueError('{} data is missing in the request'.format(str(error)))
+
+            auth = dataLayer.authenticate_user(user_id, token, csrf_token)
+            print(auth)
+            if auth['role'] == 'admin':
+                return f(*args, **kwargs)
+            raise ValueError('Only admins are allowed to access this page')
+
+        except Exception as err:
+            return application.response_class(
+                response=json.dumps({"error": str(err)}),
+                status=401,
+                mimetype='application/json',
+
+            )
+    return decorated
+
 @application.route('/', methods=['POST', 'GET'])
 def health_check_aws():
 
@@ -59,15 +105,14 @@ def health_check_aws():
 
 
 @application.route('/test', methods=['POST', 'GET'])
-@token_required
+# @token_required
+@admin_required
 def test_route():
 
     return 'HELLO KEEPER HOME', 200, {'Access-Control-Allow-Origin': "http://localhost:3000",
                                                                             'Access-Control-Allow-Credentials': "true",
                                                                             'Access-Control-Allow-Headers': ["Content-Type", "Authorization"]
                                       }
-
-
 
 @application.route('/login', methods=['POST', 'OPTIONS'])
 def log_in():
@@ -80,37 +125,31 @@ def log_in():
                 email = content['email']
                 password = content['password']
 
-
             except Exception as error:
                 raise ValueError('{}, data is missing in the request'.format(str(error)))
 
             execute_login = dataLayer.log_user(email, password)
             csrf_token = execute_login["csrf_token"]
-            user_id = execute_login["user_id"]
+            user_id = execute_login["_id"]
             token= execute_login["token"]
-            # return json.dumps({"user_id": user_id}, default=str), 200,  {"Content-Type": "application/json",
-            #                                                              "Access-Control-Expose-Headers": "token",
-            #                                                             "token": token}
+            role = execute_login["role"]
             response = application.response_class(
-                response=json.dumps({"user_id": user_id}),
+                response=json.dumps({"user_id": user_id, "role": role}),
                 status=200,
                 mimetype='application/json',
                 headers={'Access-Control-Allow-Origin': "http://localhost:3000",
                          'Access-Control-Allow-Credentials': "true",
                          'Access-Control-Allow-Headers': "Content-Type",
-                         'Access-Control-Expose-Headers': "Authorization",
-                         "Authorization":  csrf_token,
+                         'Access-Control-Expose-Headers': ["Authorization", "token"],
+                         "Authorization":  csrf_token, #### development only
+                         "token":  token #development only
                          }
 
             )
 
-            response.set_cookie('token', value=token, httponly=True, domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
-                                path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True, samesite='none')
-
-            # response.set_cookie('xsrf-token', value=csrf_token, httponly=False,
-            #                     domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com' ,
-            #                     path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
-            #                     samesite='none')
+            #### commented out for development only
+            # response.set_cookie('token', value=token, httponly=True, domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
+            #                     path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True, samesite='none')
 
             return response
 
@@ -136,9 +175,43 @@ def logout():
 
 @application.route('/add_user', methods=["POST"])
 def add_user():
-    added_user = dataLayer.add_user()
-    resp = json.dumps(added_user, default=str), 200, {"Content-Type": "application/json"}
-    return resp
+    try:
+        content = request.json
+        try:
+            added_user = dataLayer.add_user(content)
+        except Exception as e:
+            raise ValueError('the following error occurred when trying to add a new user: {}'.format(str(e)))
+
+        try:
+            email_address = added_user['email']
+            user_id = added_user['_id']
+            token = added_user['token']
+            url = 'http://localhost:3000/resetpassword/path?id=' + user_id + '&token=' + token
+            try:
+                msg = Message('Reset Password', recipients=[email_address])
+                msg.body = render_template('reset_password.txt', url=url)
+                msg.html = render_template('reset_pass.html', title='reset password',
+                                           url=url)
+                mail.send(msg)
+            except Exception as error:
+                raise ValueError("failed to send email {}".format(str(error)))
+            resp = application.response_class(
+                response=json.dumps({"message": "email to the new user has been sent successfully",
+                                     "user_id": user_id}),
+                status=200,
+                mimetype='application/json',
+                headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+                         'Access-Control-Allow-Credentials': "true",
+                         'Access-Control-Allow-Headers': "Content-Type",
+                         }
+
+            )
+            return resp
+        except Exception as error:
+            raise ValueError(str(error))
+
+    except Exception as error:
+        return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
 
 
 @application.route('/delete_user/<string:user_id>', methods=["DELETE"])
@@ -207,8 +280,6 @@ def _build_cors_preflight_response():
     )
 
     return response
-
-
 
 
 
