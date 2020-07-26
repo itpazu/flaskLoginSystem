@@ -9,7 +9,6 @@ from functools import wraps
 from datetime import datetime, timedelta
 from flask_mail import Mail, Message
 
-
 mail_settings = {
     "MAIL_SERVER": 'smtp.gmail.com',  # using gmail's mail server
     "MAIL_PORT": 465,
@@ -38,13 +37,12 @@ def token_required(f):
     def decorated(*args, **kwargs):
         try:
             content = request.json
-            csrf_token = request.headers.get('Authorization')
-            token = request.headers.get('token') #for dev only
-
-            # cookie = request.cookies          ## commented out for development only
-            # token = cookie.get('token')
+            # token = request.headers.get('token') #for dev only
+            cookie = request.cookies          ## commented out for development only
 
             try:
+                csrf_token = request.headers.get('Authorization')
+                token = cookie.get('token')
                 user_id = content['user_id']
             except Exception as error:
                 raise ValueError('{} data is missing in the request'.format(str(error)))
@@ -71,12 +69,10 @@ def admin_required(f):
         try:
             content = request.json
             csrf_token = request.headers.get('Authorization')
-            token = request.headers.get('token')  # for dev only
-            print(token)
-            print(csrf_token)
-            # print(content['user_id'])
-            # cookie = request.cookies          ## commented out for development only
-            # token = cookie.get('token')
+            # token = request.headers.get('token')  # for dev only
+
+            cookie = request.cookies          ## commented out for development only
+            token = cookie.get('token')
 
             try:
                 user_id = content['user_id']
@@ -131,25 +127,30 @@ def log_in():
             execute_login = dataLayer.log_user(email, password)
             csrf_token = execute_login["csrf_token"]
             user_id = execute_login["_id"]
-            token= execute_login["token"]
+            token = execute_login["token"]
             role = execute_login["role"]
+            first_name = execute_login ["first_name"]
+            last_name = execute_login ["last_name"]
+
             response = application.response_class(
-                response=json.dumps({"user_id": user_id, "role": role}),
+                response=json.dumps({"user_id": user_id, "role": role, "first_name": first_name,
+                                     "last_name": last_name}),
                 status=200,
                 mimetype='application/json',
                 headers={'Access-Control-Allow-Origin': "http://localhost:3000",
                          'Access-Control-Allow-Credentials': "true",
                          'Access-Control-Allow-Headers': "Content-Type",
-                         'Access-Control-Expose-Headers': ["Authorization", "token"],
-                         "Authorization":  csrf_token, #### development only
-                         "token":  token #development only
+                         # 'Access-Control-Expose-Headers': ["Authorization", "token"], ### dev only
+                         'Access-Control-Expose-Headers': "Authorization",
+                         "Authorization":  csrf_token,
+                         # "token":  token #development only
                          }
 
             )
 
             #### commented out for development only
-            # response.set_cookie('token', value=token, httponly=True, domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
-            #                     path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True, samesite='none')
+            response.set_cookie('token', value=token, httponly=True, domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
+                                path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True, samesite='none')
 
             return response
 
@@ -174,6 +175,7 @@ def logout():
     return response
 
 @application.route('/add_user', methods=["POST"])
+@admin_required
 def add_user():
     try:
         content = request.json
