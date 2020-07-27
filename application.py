@@ -185,7 +185,7 @@ def all_users():
     for i in users:
         all_users_list.append(i)
 
-    response = application.response_class(response=(json.dumps({"students": all_users_list}, default=str)), status=200,
+    response = application.response_class(response=(json.dumps({"users": all_users_list}, default=str)), status=200,
                                           mimetype="application/json")
     return response
 
