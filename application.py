@@ -67,14 +67,14 @@ def admin_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         try:
-            content = request.json
-            csrf_token = request.headers.get('Authorization')
-            # token = request.headers.get('token')  # for dev only
-
-            cookie = request.cookies          ## commented out for development only
-            token = cookie.get('token')
-
             try:
+                content = request.json
+                csrf_token = request.headers.get('Authorization')
+                # token = request.headers.get('token')  # for dev only
+
+                cookie = request.cookies          ## commented out for development only
+                token = cookie.get('token')
+
                 user_id = content['user_id']
             except Exception as error:
                 raise ValueError('{} data is missing in the request'.format(str(error)))
