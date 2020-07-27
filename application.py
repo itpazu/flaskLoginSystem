@@ -177,7 +177,6 @@ def logout():
 
 
 @application.route('/all_users')
-@admin_required
 def all_users():
     users = dataLayer.all_users()
 
