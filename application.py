@@ -37,12 +37,12 @@ def token_required(f):
     def decorated(*args, **kwargs):
         try:
             content = request.json
-            # cookie = request.cookies          ## commented out for development only
+            cookie = request.cookies          ## commented out for development only
 
             try:
                 csrf_token = request.headers.get('Authorization')
-                token = request.headers.get('token')  ##for dev only
-                # token = cookie.get('token')
+                # token = request.headers.get('token')  ##for dev only
+                token = cookie.get('token')
                 user_id = content['user_id']
             except Exception as error:
                 raise ValueError('{} data is missing in the request'.format(str(error)))
@@ -148,6 +148,10 @@ def log_in():
 
             )
 
+            response.set_cookie('token', value=token, httponly=True,
+                                domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
+                                path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
+                                samesite='none')
 
 
             return response
