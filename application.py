@@ -74,8 +74,8 @@ def admin_required(f):
 
                 cookie = request.cookies          ## commented out for development only
                 token = cookie.get('token')
-
                 user_id = content['user_id']
+
             except Exception as error:
                 raise ValueError('{} data is missing in the request'.format(str(error)))
 
@@ -109,6 +109,7 @@ def test_route():
                                                                             'Access-Control-Allow-Credentials': "true",
                                                                             'Access-Control-Allow-Headers': ["Content-Type", "Authorization"]
                                       }
+
 
 @application.route('/login', methods=['POST', 'OPTIONS'])
 def log_in():
@@ -159,6 +160,7 @@ def log_in():
         except Exception as error:
             return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
 
+
 @application.route('/logout', methods=['GET', 'POST'])
 def logout():
 
@@ -175,6 +177,21 @@ def logout():
                         path='/', expires=0, secure=True, samesite='none')
 
     return response
+
+
+@application.route('/all_users')
+def all_users():
+    users = dataLayer.all_users()
+
+    all_users_list = []
+
+    for i in users:
+        all_users_list.append(i)
+
+    response = application.response_class(response=(json.dumps({"users": all_users_list}, default=str)), status=200,
+                                          mimetype="application/json")
+    return response
+
 
 @application.route('/add_user', methods=["POST"])
 @admin_required
@@ -224,6 +241,7 @@ def delete_user(user_id):
     resp = json.dumps(deleted_user, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
+
 @application.route('/make_admin/<string:user_id>', methods=["POST"])
 def make_admin(user_id):
     new_admin = dataLayer.make_admin(user_id)
@@ -271,6 +289,7 @@ def change_password(user_id):
     changed_password = dataLayer.change_password(user_id)
     resp = json.dumps(changed_password, default=str), 200, {"Content-Type": "application/json"}
     return resp
+
 
 def _build_cors_preflight_response():
 

@@ -4,7 +4,12 @@ from Util import decode_token, encode_token, generate_id
 import jwt
 import secrets
 
+
 class DataLayer:
+
+    def all_users(self):
+        users = self.__db.Users.find()
+        return users
 
     def get_doc_by_email(self, email):
 
