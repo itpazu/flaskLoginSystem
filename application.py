@@ -10,11 +10,11 @@ from datetime import datetime, timedelta
 from flask_mail import Mail, Message
 
 mail_settings = {
-    "MAIL_SERVER": 'smtp.gmail.com',  # using gmail's mail server
+    "MAIL_SERVER": 'smtp.gmail.com',
     "MAIL_PORT": 465,
     "MAIL_USE_TLS": False,
     "MAIL_USE_SSL": True,
-    "MAIL_USERNAME": os.getenv('EMAIL'),  # using gmail account
+    "MAIL_USERNAME": os.getenv('EMAIL'),
     "MAIL_PASSWORD": os.getenv('EMAIL_PASSWORD'),
     "MAIL_DEFAULT_SENDER": ('KeepersHome', os.getenv('EMAIL'))
 }
@@ -37,12 +37,12 @@ def token_required(f):
     def decorated(*args, **kwargs):
         try:
             content = request.json
-            # token = request.headers.get('token') #for dev only
-            cookie = request.cookies          ## commented out for development only
+            # cookie = request.cookies          ## commented out for development only
 
             try:
                 csrf_token = request.headers.get('Authorization')
-                token = cookie.get('token')
+                token = request.headers.get('token')  ##for dev only
+                # token = cookie.get('token')
                 user_id = content['user_id']
             except Exception as error:
                 raise ValueError('{} data is missing in the request'.format(str(error)))
@@ -87,7 +87,7 @@ def admin_required(f):
 
         except Exception as err:
             return application.response_class(
-                response=json.dumps({"error": str(err)}),
+                response=json.dumps("error " + str(err)),
                 status=401,
                 mimetype='application/json',
 
@@ -101,8 +101,8 @@ def health_check_aws():
 
 
 @application.route('/test', methods=['POST', 'GET'])
-# @token_required
-@admin_required
+@token_required
+# @admin_required
 def test_route():
 
     return 'HELLO KEEPER HOME', 200, {'Access-Control-Allow-Origin': "http://localhost:3000",
@@ -148,9 +148,7 @@ def log_in():
 
             )
 
-            #### commented out for development only
-            response.set_cookie('token', value=token, httponly=True, domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
-                                path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True, samesite='none')
+
 
             return response
 
