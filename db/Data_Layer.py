@@ -4,7 +4,12 @@ from Util import decode_token, encode_token, generate_id
 import jwt
 import secrets
 
+
 class DataLayer:
+
+    def all_users(self):
+        users = self.__db.Users.find()
+        return users
 
     def get_doc_by_email(self, email):
 
@@ -98,7 +103,7 @@ class DataLayer:
             return False
 
     def store_token(self, user_id, token, csrf_token):
-        store_token = self.__db.Users.update({"_id": user_id}, {"$set": {"token": token, 'csrf_token': csrf_token }})
+        store_token = self.__db.Users.update({"_id": user_id}, {"$set": {"token": token, 'csrf_token': csrf_token}})
         return store_token
 
     def delete_user(self, user_id):
@@ -211,8 +216,8 @@ class DataLayer:
         try:
             if self.__db.Users.find_one({"_id": user_id}):
                 self.__db.Users.find_one_and_update({"_id": user_id}, {"$set": {"password": password,
-                                                                                    "last_update_time":
-                                                                                        User.updated_at()}})
+                                                                                "last_update_time":
+                                                                                    User.updated_at()}})
                 changed_password = {'status': 'The password has been changed!'}
                 return changed_password
             else:

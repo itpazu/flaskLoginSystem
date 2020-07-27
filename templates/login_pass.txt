@@ -1,0 +1,7 @@
+Dear User,
+
+To login for the first time, click on the following link:
+{{ url }}
+
+Sincerely,
+The KeepersHome Team

@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% block content %}
+​
+<p>Dear User,</p>
+<p>
+    To login for the first time
+    <a href="{{ url }}">
+        click here
+    </a>.
+</p>
+<p>Alternatively, you can paste the following link in your browser's address bar:</p>
+<p>{{ url }}</p>
+<p>Sincerely,</p>
+<p>The KeepersHome Team</p>
+{% endblock content %}

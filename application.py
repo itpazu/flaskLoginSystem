@@ -31,13 +31,12 @@ mail = Mail(application)
 dataLayer = DataLayer(bcrypt, __client)
 
 
-
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         try:
             content = request.json
-            cookie = request.cookies          ## commented out for development only
+            cookie = request.cookies  ## commented out for development only
 
             try:
                 csrf_token = request.headers.get('Authorization')
@@ -51,7 +50,7 @@ def token_required(f):
 
         except Exception as err:
             response = application.response_class(
-                response=json.dumps({"authentication failed": 'the following error occurred:' +  str(err)}),
+                response=json.dumps({"authentication failed": 'the following error occurred:' + str(err)}),
                 status=401,
                 mimetype='application/json',
 
@@ -71,7 +70,7 @@ def admin_required(f):
             csrf_token = request.headers.get('Authorization')
             # token = request.headers.get('token')  # for dev only
 
-            cookie = request.cookies          ## commented out for development only
+            cookie = request.cookies  ## commented out for development only
             token = cookie.get('token')
 
             try:
@@ -92,11 +91,12 @@ def admin_required(f):
                 mimetype='application/json',
 
             )
+
     return decorated
+
 
 @application.route('/', methods=['POST', 'GET'])
 def health_check_aws():
-
     return 'success', 200, {"Content-Type": "application/json"}
 
 
@@ -104,11 +104,11 @@ def health_check_aws():
 @token_required
 # @admin_required
 def test_route():
-
     return 'HELLO KEEPER HOME', 200, {'Access-Control-Allow-Origin': "http://localhost:3000",
-                                                                            'Access-Control-Allow-Credentials': "true",
-                                                                            'Access-Control-Allow-Headers': ["Content-Type", "Authorization"]
+                                      'Access-Control-Allow-Credentials': "true",
+                                      'Access-Control-Allow-Headers': ["Content-Type", "Authorization"]
                                       }
+
 
 @application.route('/login', methods=['POST', 'OPTIONS'])
 def log_in():
@@ -129,8 +129,8 @@ def log_in():
             user_id = execute_login["_id"]
             token = execute_login["token"]
             role = execute_login["role"]
-            first_name = execute_login ["first_name"]
-            last_name = execute_login ["last_name"]
+            first_name = execute_login["first_name"]
+            last_name = execute_login["last_name"]
 
             response = application.response_class(
                 response=json.dumps({"user_id": user_id, "role": role, "first_name": first_name,
@@ -142,7 +142,7 @@ def log_in():
                          'Access-Control-Allow-Headers': "Content-Type",
                          # 'Access-Control-Expose-Headers': ["Authorization", "token"], ### dev only
                          'Access-Control-Expose-Headers': "Authorization",
-                         "Authorization":  csrf_token,
+                         "Authorization": csrf_token,
                          # "token":  token #development only
                          }
 
@@ -153,15 +153,14 @@ def log_in():
                                 path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
                                 samesite='none')
 
-
             return response
 
         except Exception as error:
             return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
 
+
 @application.route('/logout', methods=['GET', 'POST'])
 def logout():
-
     response = application.response_class(
         response='logout',
         status=200,
@@ -175,6 +174,22 @@ def logout():
                         path='/', expires=0, secure=True, samesite='none')
 
     return response
+
+
+@application.route('/all_users')
+@admin_required
+def all_users():
+    users = dataLayer.all_users()
+
+    all_users_list = []
+
+    for i in users:
+        all_users_list.append(i)
+
+    response = application.response_class(response=(json.dumps({"students": all_users_list}, default=str)), status=200,
+                                          mimetype="application/json")
+    return response
+
 
 @application.route('/add_user', methods=["POST"])
 @admin_required
@@ -224,6 +239,7 @@ def delete_user(user_id):
     resp = json.dumps(deleted_user, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
+
 @application.route('/make_admin/<string:user_id>', methods=["POST"])
 def make_admin(user_id):
     new_admin = dataLayer.make_admin(user_id)
@@ -272,8 +288,8 @@ def change_password(user_id):
     resp = json.dumps(changed_password, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
-def _build_cors_preflight_response():
 
+def _build_cors_preflight_response():
     response = application.response_class(
 
         status=200,
@@ -284,7 +300,6 @@ def _build_cors_preflight_response():
     )
 
     return response
-
 
 
 if __name__ == "__main__":
