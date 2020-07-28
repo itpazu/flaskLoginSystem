@@ -233,7 +233,6 @@ def add_user():
 
 
 @application.route('/delete_user/<string:_id>', methods=["DELETE"])
-@admin_required
 def delete_user(_id):
     deleted_user = dataLayer.delete_user(_id)
     resp = json.dumps(deleted_user, default=str), 200, {"Content-Type": "application/json"}
