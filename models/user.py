@@ -11,9 +11,9 @@ class User:
     def updated_at():
         return datetime.datetime.now().isoformat()
 
-    def __init__(self, user_id, last_name, first_name, email, password, role, token=None):
+    def __init__(self, _id, last_name, first_name, email, password, role, token=None):
 
-        self._id = str(user_id)
+        self._id = str(_id)
         self.last_name = str(last_name)
         self.first_name = str(first_name)
         self.email = str(email)
