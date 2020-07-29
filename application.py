@@ -43,11 +43,11 @@ def token_required(f):
                 csrf_token = request.headers.get('Authorization')
                 # token = request.headers.get('token')  ##for dev only
                 token = cookie.get('token')
-                user_id = content['user_id']
+                _id = content['_id']
             except Exception as error:
                 raise ValueError('{} data is missing in the request'.format(str(error)))
 
-            dataLayer.authenticate_user(user_id, token, csrf_token)
+            dataLayer.authenticate_user(_id, token, csrf_token)
 
         except Exception as err:
             response = application.response_class(
@@ -67,19 +67,20 @@ def admin_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         try:
+
+            content = request.json
+            csrf_token = request.headers.get('Authorization')
+            # token = request.headers.get('token')  # for dev only
+
+            cookie = request.cookies  # commented out for development only
+            token = cookie.get('token')
+
             try:
-                content = request.json
-                csrf_token = request.headers.get('Authorization')
-                # token = request.headers.get('token')  # for dev only
-
-                cookie = request.cookies          ## commented out for development only
-                token = cookie.get('token')
-                user_id = content['user_id']
-
+                _id = content['_id']
             except Exception as error:
                 raise ValueError('{} data is missing in the request'.format(str(error)))
 
-            auth = dataLayer.authenticate_user(user_id, token, csrf_token)
+            auth = dataLayer.authenticate_user(_id, token, csrf_token)
             print(auth)
             if auth['role'] == 'admin':
                 return f(*args, **kwargs)
@@ -134,14 +135,14 @@ def log_in():
             last_name = execute_login ["last_name"]
 
             response = application.response_class(
-                response=json.dumps({"user_id": user_id, "role": role, "first_name": first_name,
+                response=json.dumps({"_id": user_id, "role": role, "first_name": first_name,
                                      "last_name": last_name}),
                 status=200,
                 mimetype='application/json',
                 headers={'Access-Control-Allow-Origin': "http://localhost:3000",
                          'Access-Control-Allow-Credentials': "true",
                          'Access-Control-Allow-Headers': "Content-Type",
-                         # 'Access-Control-Expose-Headers': ["Authorization", "token"], ### dev only
+                         # 'Access-Control-Expose-Headers': ["Authorization", "token"], # dev only
                          'Access-Control-Expose-Headers': "Authorization",
                          "Authorization":  csrf_token,
                          # "token":  token #development only
@@ -218,7 +219,7 @@ def add_user():
                 raise ValueError("failed to send email {}".format(str(error)))
             resp = application.response_class(
                 response=json.dumps({"message": "email to the new user has been sent successfully",
-                                     "user_id": user_id}),
+                                     "_id": user_id}),
                 status=200,
                 mimetype='application/json',
                 headers={'Access-Control-Allow-Origin': "http://localhost:3000",
@@ -235,58 +236,58 @@ def add_user():
         return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
 
 
-@application.route('/delete_user/<string:user_id>', methods=["DELETE"])
-def delete_user(user_id):
-    deleted_user = dataLayer.delete_user(user_id)
+@application.route('/delete_user/<string:_id>', methods=["DELETE"])
+def delete_user(_id):
+    deleted_user = dataLayer.delete_user(_id)
     resp = json.dumps(deleted_user, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
 
-@application.route('/make_admin/<string:user_id>', methods=["POST"])
-def make_admin(user_id):
-    new_admin = dataLayer.make_admin(user_id)
+@application.route('/make_admin/<string:_id>', methods=["POST"])
+def make_admin(_id):
+    new_admin = dataLayer.make_admin(_id)
     resp = json.dumps(new_admin, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
 
-@application.route('/demote_admin/<string:user_id>', methods=["POST"])
-def demote_admin(user_id):
-    demoted_admin = dataLayer.demote_admin(user_id)
+@application.route('/demote_admin/<string:_id>', methods=["POST"])
+def demote_admin(_id):
+    demoted_admin = dataLayer.demote_admin(_id)
     resp = json.dumps(demoted_admin, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
 
-@application.route('/change_first_name/<string:user_id>', methods=["POST"])
-def change_first_name(user_id):
-    changed_name = dataLayer.change_first_name(user_id)
+@application.route('/change_first_name/<string:_id>', methods=["POST"])
+def change_first_name(_id):
+    changed_name = dataLayer.change_first_name(_id)
     resp = json.dumps(changed_name, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
 
-@application.route('/change_last_name/<string:user_id>', methods=["POST"])
-def change_last_name(user_id):
-    changed_name = dataLayer.change_last_name(user_id)
+@application.route('/change_last_name/<string:_id>', methods=["POST"])
+def change_last_name(_id):
+    changed_name = dataLayer.change_last_name(_id)
     resp = json.dumps(changed_name, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
 
-@application.route('/change_email/<string:user_id>', methods=["POST"])
-def change_email(user_id):
-    changed_email = dataLayer.change_email(user_id)
+@application.route('/change_email/<string:_id>', methods=["POST"])
+def change_email(_id):
+    changed_email = dataLayer.change_email(_id)
     resp = json.dumps(changed_email, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
 
-@application.route('/change_user_id/<string:user_id>', methods=["POST"])
-def change_user_id(user_id):
-    changed_user_id = dataLayer.change_user_id(user_id)
-    resp = json.dumps(changed_user_id, default=str), 200, {"Content-Type": "application/json"}
+@application.route('/change_id/<string:_id>', methods=["POST"])
+def change_id(_id):
+    changed_id = dataLayer.change_id(_id)
+    resp = json.dumps(changed_id, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
 
-@application.route('/change_password/<string:user_id>', methods=["POST"])
-def change_password(user_id):
-    changed_password = dataLayer.change_password(user_id)
+@application.route('/change_password/<string:_id>', methods=["POST"])
+def change_password(_id):
+    changed_password = dataLayer.change_password(_id)
     resp = json.dumps(changed_password, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
