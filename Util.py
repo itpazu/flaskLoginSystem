@@ -6,6 +6,7 @@ import string
 
 def encode_token(user_id, password, isAdmin):
 
+
     try:
         payload = {
             'exp': datetime.utcnow() + timedelta(minutes=10),
@@ -14,19 +15,17 @@ def encode_token(user_id, password, isAdmin):
             'role': isAdmin
         }
         secret_key = os.environ.get('JWT_SECRET_KEY') + str(password) + user_id
-
-        return jwt.encode(
+        token = jwt.encode(
             payload,
             secret_key,
             algorithm='HS256',
         ).decode("utf-8")
-
+        return token
     except Exception as e:
-        return e
+        raise ValueError('token generation failed: {}'.format(str(e)))
 
 
 def decode_token(token, user_id, password):
-
     if token is None:
         raise ValueError('token is missing from request')
 
@@ -38,6 +37,9 @@ def decode_token(token, user_id, password):
         return {"_id": payload['sub'], "role": payload['role']}
     except Exception as error:
         raise ValueError("token encoding error: " + str(error))
+
+
+
 
 
 def generate_id():
