@@ -8,8 +8,11 @@ import secrets
 class DataLayer:
 
     def all_users(self):
-        users = self.__db.Users.find()
-        return users
+        try:
+            users = self.__db.Users.find()
+            return users
+        except Exception as e:
+            raise ValueError('db update failed: {} '.format(e))
 
     def get_doc_by_email(self, email):
 
@@ -21,6 +24,7 @@ class DataLayer:
 
     def get_doc_by_user_id(self, user_id):
         user_dict = self.__db.Users.find_one({"_id": user_id})
+
         if user_dict:
             return user_dict
         else:
@@ -130,8 +134,8 @@ class DataLayer:
 
     def delete_user(self, _id):
         try:
-            if self.__db.Users.find_one({"_id": _id}):
-                self.__db.Users.delete_one({"_id": _id})
+            deleted = self.__db.Users.delete_one({"_id": _id})
+            if deleted.deleted_count > 0:
                 users = {"status": 'The user has been deleted!'}
                 return users
             else:

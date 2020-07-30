@@ -9,7 +9,7 @@ def encode_token(user_id, password, isAdmin):
 
     try:
         payload = {
-            'exp': datetime.utcnow() + timedelta(minutes=10),
+            'exp': datetime.utcnow() + timedelta(minutes=5),
             'iat': datetime.utcnow(),
             'sub': user_id,
             'role': isAdmin

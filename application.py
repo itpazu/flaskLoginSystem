@@ -43,7 +43,6 @@ def token_required(f):
                 csrf_token = request.headers.get('Authorization')
                 if csrf_token is None:
                     raise ValueError('csrf')
-                print(csrf_token)
                 # token = request.headers.get('token')  ##for dev only
                 token = cookie.get('token')
                 user_id = content['_id']
@@ -212,19 +211,22 @@ def logout():
     return response
 
 
-@application.route('/all_users')
-@token_required
+@application.route('/all_users', methods=['GET', 'POST'])
+@admin_required
 def all_users():
-    users = dataLayer.all_users()
+    try:
+        users = dataLayer.all_users()
+        all_users_list = []
 
-    all_users_list = []
+        for i in users:
+            all_users_list.append(i)
 
-    for i in users:
-        all_users_list.append(i)
+        response = application.response_class(response=(json.dumps({"users": all_users_list}, default=str)), status=200,
+                                              mimetype="application/json")
+        return response
 
-    response = application.response_class(response=(json.dumps({"users": all_users_list}, default=str)), status=200,
-                                          mimetype="application/json")
-    return response
+    except Exception as e:
+        return json.dumps(e, default=str), 401, {"Content-Type": "application/json"}
 
 
 @application.route('/add_user', methods=["POST"])
@@ -269,11 +271,11 @@ def solicit_new_pass():
 
 
 @application.route('/delete_user', methods=["DELETE"])
-# @admin_required
+@admin_required
 def delete_user():
     try:
         content = request.json
-        _id = content['_id']
+        _id = content['user_id'] ### must stay user_id!
         deleted_user = dataLayer.delete_user(_id)
         resp = json.dumps(deleted_user, default=str), 200, {"Content-Type": "application/json"}
         return resp
