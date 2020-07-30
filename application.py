@@ -41,18 +41,21 @@ def token_required(f):
 
             try:
                 csrf_token = request.headers.get('Authorization')
+                if csrf_token is None:
+                    raise ValueError('csrf')
+                print(csrf_token)
                 # token = request.headers.get('token')  ##for dev only
                 token = cookie.get('token')
-                _id = content['_id']
+                user_id = content['_id']
             except Exception as error:
                 raise ValueError('{} data is missing in the request'.format(str(error)))
 
-            dataLayer.authenticate_user(_id, token, csrf_token)
+            dataLayer.authenticate_user(user_id, token, csrf_token)
 
         except Exception as err:
             response = application.response_class(
-                response=json.dumps({"authentication failed": 'the following error occurred:' +  str(err)}),
-                status=401,
+                response=json.dumps("authentication failed:" + str(err)),
+                status=402,
                 mimetype='application/json',
 
             )
@@ -63,25 +66,24 @@ def token_required(f):
     return decorated
 
 
+
 def admin_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         try:
-
-            content = request.json
-            csrf_token = request.headers.get('Authorization')
-            # token = request.headers.get('token')  # for dev only
-
-            cookie = request.cookies  # commented out for development only
-            token = cookie.get('token')
-
             try:
-                _id = content['_id']
+                content = request.json
+                csrf_token = request.headers.get('Authorization')
+                # token = request.headers.get('token')  # for dev only
+
+                cookie = request.cookies  ## commented out for development only
+                token = cookie.get('token')
+                user_id = content['_id']
+
             except Exception as error:
                 raise ValueError('{} data is missing in the request'.format(str(error)))
 
-            auth = dataLayer.authenticate_user(_id, token, csrf_token)
-            print(auth)
+            auth = dataLayer.authenticate_user(user_id, token, csrf_token)
             if auth['role'] == 'admin':
                 return f(*args, **kwargs)
             raise ValueError('Only admins are allowed to access this page')
@@ -89,7 +91,7 @@ def admin_required(f):
         except Exception as err:
             return application.response_class(
                 response=json.dumps("error " + str(err)),
-                status=401,
+                status=402,
                 mimetype='application/json',
 
             )
@@ -110,7 +112,6 @@ def test_route():
                                                                             'Access-Control-Allow-Credentials': "true",
                                                                             'Access-Control-Allow-Headers': ["Content-Type", "Authorization"]
                                       }
-
 
 @application.route('/login', methods=['POST', 'OPTIONS'])
 def log_in():
@@ -141,9 +142,9 @@ def log_in():
                 mimetype='application/json',
                 headers={'Access-Control-Allow-Origin': "http://localhost:3000",
                          'Access-Control-Allow-Credentials': "true",
-                         'Access-Control-Allow-Headers': "Content-Type",
-                         # 'Access-Control-Expose-Headers': ["Authorization", "token"], # dev only
-                         'Access-Control-Expose-Headers': "Authorization",
+                         'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
+                         # 'Access-Control-Expose-Headers': ["Authorization", "token"], ### dev only
+                         'Access-Control-Expose-Headers': ["Authorization"],
                          "Authorization":  csrf_token,
                          # "token":  token #development only
                          }
@@ -162,6 +163,41 @@ def log_in():
             return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
 
 
+@application.route('/check_token', methods=['GET', 'POST', 'OPTIONS'])
+def check_token_for_pass_reset():
+
+    if request.method == "OPTIONS":
+        return _build_cors_preflight_response()
+
+    elif request.method == "POST":
+        try:
+            try:
+                content= request.json
+                token = request.headers.get('token')
+                user_id = content['_id']
+            except Exception as error:
+                raise ValueError('{} data is missing in the request'.format(str(error)))
+
+            dataLayer.authenticate_user(user_id, token)
+            response = application.response_class(
+                response=json.dumps('token approved'),
+                status=200,
+                mimetype='application/json',
+                headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+                             'Access-Control-Allow-Credentials': "true",
+                             'Access-Control-Allow-Headers': "Content-Type",
+                             }
+
+            )
+            return response
+
+        except Exception as error:
+            return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
+
+
+
+
+
 @application.route('/logout', methods=['GET', 'POST'])
 def logout():
 
@@ -173,14 +209,11 @@ def logout():
 
     )
 
-    response.set_cookie('token', value='new_token', httponly=True,
-                        domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
-                        path='/', expires=0, secure=True, samesite='none')
-
     return response
 
 
 @application.route('/all_users')
+@token_required
 def all_users():
     users = dataLayer.all_users()
 
@@ -199,48 +232,53 @@ def all_users():
 def add_user():
     try:
         content = request.json
-        try:
-            added_user = dataLayer.add_user(content)
-        except Exception as e:
-            raise ValueError('the following error occurred when trying to add a new user: {}'.format(str(e)))
+        added_user = dataLayer.add_user(content)
+    except Exception as e:
+        raise ValueError('the following error occurred when trying to add a new user: {}'.format(str(e)))
 
-        try:
-            email_address = added_user['email']
-            user_id = added_user['_id']
-            token = added_user['token']
-            url = 'http://localhost:3000/resetpassword/path?id=' + user_id + '&token=' + token
-            try:
-                msg = Message('Reset Password', recipients=[email_address])
-                msg.body = render_template('reset_password.txt', url=url)
-                msg.html = render_template('reset_pass.html', title='reset password',
-                                           url=url)
-                mail.send(msg)
-            except Exception as error:
-                raise ValueError("failed to send email {}".format(str(error)))
-            resp = application.response_class(
-                response=json.dumps({"message": "email to the new user has been sent successfully",
-                                     "_id": user_id}),
-                status=200,
-                mimetype='application/json',
-                headers={'Access-Control-Allow-Origin': "http://localhost:3000",
-                         'Access-Control-Allow-Credentials': "true",
-                         'Access-Control-Allow-Headers': "Content-Type",
-                         }
+    try:
+        email_address = added_user['email']
+        user_id = added_user['_id']
+        token = added_user['token']
+        sent_mail = send_password_by_mail(email_address, user_id, token)
 
-            )
-            return resp
+        return sent_mail
+    except Exception as error:
+        return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
+
+@application.route('/newpass_solicit', methods=['GET', 'POST'])
+def solicit_new_pass():
+    try:
+        try:
+            email = request.json['email']
+
         except Exception as error:
-            raise ValueError(str(error))
+            raise ValueError('{} data is missing in the request'.format(str(error)))
+        user_dic = dataLayer.solcit_new_password(email)
+        if user_dic is None:
+            raise ValueError('user does not exist in db')
+
+        token = user_dic['token']
+        user_id = user_dic['_id']
+        sent_email = send_password_by_mail(email, user_id, token)
+
+        return sent_email
 
     except Exception as error:
         return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
 
 
-@application.route('/delete_user/<string:_id>', methods=["DELETE"])
-def delete_user(_id):
-    deleted_user = dataLayer.delete_user(_id)
-    resp = json.dumps(deleted_user, default=str), 200, {"Content-Type": "application/json"}
-    return resp
+@application.route('/delete_user', methods=["DELETE"])
+# @admin_required
+def delete_user():
+    try:
+        content = request.json
+        _id = content['_id']
+        deleted_user = dataLayer.delete_user(_id)
+        resp = json.dumps(deleted_user, default=str), 200, {"Content-Type": "application/json"}
+        return resp
+    except Exception as e:
+        return json.dumps('Delete failed: {}'.format(e), default=str), 401, {"Content-Type": "application/json"}
 
 
 @application.route('/make_admin/<string:_id>', methods=["POST"])
@@ -285,11 +323,28 @@ def change_id(_id):
     return resp
 
 
-@application.route('/change_password/<string:_id>', methods=["POST"])
-def change_password(_id):
-    changed_password = dataLayer.change_password(_id)
-    resp = json.dumps(changed_password, default=str), 200, {"Content-Type": "application/json"}
-    return resp
+@application.route('/change_password', methods=["POST"])
+def change_password():
+    try:
+        content = request.json
+        changed_password = dataLayer.change_password(content)
+
+        response = application.response_class(response=json.dumps("Password has been changed successfully:" + changed_password),
+                                              status=200,
+                                              mimetype='application/json',
+                                              headers= {'Access-Control-Allow-Origin': "http://localhost:3000",
+                                          'Access-Control-Allow-Credentials': "true",
+                                          'Access-Control-Allow-Headers': ["Content-Type"]})
+
+        return response
+
+    except Exception as err:
+
+        response = application.response_class(response=json.dumps("update failed:" + str(err)),
+                                              status=401,
+                                              mimetype='application/json')
+
+        return response
 
 
 def _build_cors_preflight_response():
@@ -299,13 +354,37 @@ def _build_cors_preflight_response():
         status=200,
         mimetype='application/json',
         headers={'Access-Control-Allow-Origin': "http://localhost:3000", 'Access-Control-Allow-Credentials': "true",
-                 'Access-Control-Allow-Headers': "Content-Type"}
+                 'Access-Control-Allow-Headers': ["Content-Type", "token"]}
 
     )
 
     return response
 
+def send_password_by_mail(email_address, user_id, token):
 
+    try:
+        url = 'http://localhost:3000/change_pass/path?id=' + user_id + '&token=' + token
+
+        msg = Message('Reset Password', recipients=[email_address])
+        msg.body = render_template('reset_password.txt', url=url)
+        msg.html = render_template('reset_pass.html', title='reset password',
+                                   url=url)
+        mail.send(msg)
+    except Exception as error:
+        raise ValueError("failed to send email {}".format(str(error)))
+
+    resp = application.response_class(
+        response=json.dumps({"message": "email to the new user has been sent successfully",
+                             "user_id": user_id}),
+        status=200,
+        mimetype='application/json',
+        headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+                 'Access-Control-Allow-Credentials': "true",
+                 'Access-Control-Allow-Headers': "Content-Type",
+                 }
+
+    )
+    return resp
 
 if __name__ == "__main__":
     port = os.environ.get('PORT')

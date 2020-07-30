@@ -66,32 +66,54 @@ class DataLayer:
 
             raise ValueError('password is incorrect')
 
-    def authenticate_user(self, user_id, token, csrf_token):
+    def authenticate_user(self, user_id, token, csrf_token=None):
 
         user_from_db = self.get_doc_by_user_id(user_id)
         if user_from_db is None:
             raise ValueError('identification failed, user_id is either missing or incorrect')
 
         pass_from_db = user_from_db['password']
-        csrf_from_db = user_from_db['csrf_token']
         decoded_token = decode_token(token, user_id, pass_from_db)
 
         try:
             if user_id != decoded_token['_id']:
-                raise ValueError('Invalid session, please log in again')
-        except jwt.ExpiredSignatureError:
-            raise ValueError('Signature expired. Please log in again.')
-        except jwt.InvalidTokenError:
-            raise ValueError('Invalid token. Please log in again.')
-        try:
-            if csrf_token is None:
-                raise ValueError('csrf is missing in the request)')
-            if str(csrf_token) != str(csrf_from_db):
-                raise ValueError('csrf token is invalid!')
-        except ValueError as error:
-            raise error
+                raise ValueError('ID do not match. please log in again')
+
+        except Exception as e:
+            raise e
+
+        if csrf_token is not None:
+            try:
+                csrf_from_db = user_from_db['csrf_token']
+                if str(csrf_token) != str(csrf_from_db):
+                    raise ValueError('csrf token is invalid!')
+            except ValueError as error:
+                raise error
 
         return decoded_token
+
+
+    def solcit_new_password(self, email):
+        user_dic = self.get_doc_by_email(email)
+        if user_dic is None:
+            return None
+        password = user_dic['password']
+        user_id = user_dic['_id']
+        role = user_dic['role']
+        csrf_token = secrets.token_hex()
+
+        try:
+            token = encode_token(user_id, password, role)
+        except Exception as error:
+            raise error
+        try:
+            self.store_token(user_id, token, csrf_token)
+        except Exception as error:
+            raise ValueError('failed to update db')
+        new_user_dic = self.get_doc_by_email(email)
+        return new_user_dic
+
+
 
     def encrypt_pass(self, password):
         return self.bcrypt.generate_password_hash(password).decode('utf-8')
@@ -101,7 +123,6 @@ class DataLayer:
             return True
         else:
             return False
-
 
     def store_token(self, user_id, token, csrf_token):
         store_token = self.__db.Users.update({"_id": user_id}, {"$set": {"token": token, 'csrf_token': csrf_token }})
@@ -209,17 +230,29 @@ class DataLayer:
         except ValueError as error:
             raise error
 
-    def change_password(self, _id):
-        password = self.encrypt_pass(request.get_json()['password'])
+    def change_password(self, content):
         try:
-            if self.__db.Users.find_one({"_id": _id}):
-                self.__db.Users.find_one_and_update({"_id": _id}, {"$set": {"password": password,
-                                                                            "last_update_time": User.updated_at()}})
-                changed_password = {'status': 'The password has been changed!'}
-                return changed_password
-            else:
-                raise ValueError('The user does not exist!')
-        except ValueError as error:
+            user_id = content['_id']
+            password = content['password']
+            confirm_pass = content['confirm_password']
+
+        except Exception as error:
+            raise ValueError('{} data is missing'.format(str(error)))
+
+        if password != confirm_pass:
+            raise ValueError('passwords do not match')
+
+        hashedpass = self.encrypt_pass(password)
+
+        try:
+            changed_password = self.__db.Users.find_one_and_update({"_id": user_id}, {"$set": {"password": hashedpass,
+                                                                                "last_update_time":
+                                                                                    User.updated_at()}})
+            if changed_password is None:
+                raise ValueError('User might not exists in db')
+            return changed_password['_id']
+
+        except Exception as error:
             raise error
 
     def __init__(self, bcrypt, client):
