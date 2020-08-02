@@ -1,6 +1,6 @@
 from flask import request, jsonify, json
 from models.user import User
-from Util import decode_token, encode_token, generate_id
+from Util import decode_token, encode_access_token, generate_id
 import jwt
 import secrets
 
@@ -42,7 +42,7 @@ class DataLayer:
                 raise ValueError('user already exists!')
             else:
                 password = self.encrypt_pass(secrets.token_hex())
-                token = encode_token(user_id, password, role)
+                token = encode_access_token(user_id, password, role)
                 new_user = User(user_id, last_name, first_name, email, password, role, token)
                 self.__db.Users.insert_one(new_user.__dict__)
                 added_user = self.get_doc_by_email(email)
@@ -61,7 +61,7 @@ class DataLayer:
             role = verify_user_exists['role']
             if compare_pass:
                 user_id = str(verify_user_exists['_id'])
-                generated_token = encode_token(user_id, db_password, role)
+                generated_token = encode_access_token(user_id, db_password, role)
                 csrf_token = secrets.token_hex()
                 self.store_token(user_id, generated_token, csrf_token)
                 get_user_dict = self.get_doc_by_user_id(user_id)
@@ -107,7 +107,7 @@ class DataLayer:
         csrf_token = secrets.token_hex()
 
         try:
-            token = encode_token(user_id, password, role)
+            token = encode_access_token(user_id, password, role)
         except Exception as error:
             raise error
         try:
@@ -128,9 +128,12 @@ class DataLayer:
         else:
             return False
 
-    def store_token(self, user_id, token, csrf_token):
-        store_token = self.__db.Users.update({"_id": user_id}, {"$set": {"token": token, 'csrf_token': csrf_token }})
-        return store_token
+    def store_token(self, user_id, token, csrf_token, refresh_token=None):
+        try:
+            store_token = self.__db.Users.update({"_id": user_id}, {"$set": {"token": token, 'csrf_token': csrf_token }})
+            return store_token
+        except Exception as error:
+            raise ValueError('storage of new tokens failed: {}'.format(error))
 
     def delete_user(self, _id):
         try:

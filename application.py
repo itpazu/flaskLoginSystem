@@ -54,11 +54,11 @@ def token_required(f):
         except Exception as err:
             response = application.response_class(
                 response=json.dumps("authentication failed:" + str(err)),
-                status=402,
+                status=403,
                 mimetype='application/json',
 
             )
-            return response
+            return f(response, **kwargs)
 
         return f(*args, **kwargs)
 
@@ -90,11 +90,13 @@ def admin_required(f):
         except Exception as err:
             return application.response_class(
                 response=json.dumps("error " + str(err)),
-                status=402,
+                status=403,
                 mimetype='application/json',
 
             )
     return decorated
+
+
 
 @application.route('/', methods=['POST', 'GET'])
 def health_check_aws():
@@ -105,7 +107,10 @@ def health_check_aws():
 @application.route('/test', methods=['POST', 'GET'])
 @token_required
 # @admin_required
-def test_route():
+def test_route(result):
+
+    if result.status == '403 FORBIDDEN':
+        return result
 
     return 'HELLO KEEPER HOME', 200, {'Access-Control-Allow-Origin': "http://localhost:3000",
                                                                             'Access-Control-Allow-Credentials': "true",

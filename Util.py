@@ -4,12 +4,11 @@ import os
 import random
 import string
 
-def encode_token(user_id, password, isAdmin):
-
+def encode_access_token(user_id, password, isAdmin):
 
     try:
         payload = {
-            'exp': datetime.utcnow() + timedelta(minutes=5),
+            'exp': datetime.utcnow() + timedelta(minutes=1),
             'iat': datetime.utcnow(),
             'sub': user_id,
             'role': isAdmin
@@ -24,6 +23,23 @@ def encode_token(user_id, password, isAdmin):
     except Exception as e:
         raise ValueError('token generation failed: {}'.format(str(e)))
 
+def encode_refresh_token(user_id, password):
+
+    try:
+        payload = {
+            'exp': datetime.utcnow() + timedelta(minutes=3),
+            'iat': datetime.utcnow(),
+            'sub': user_id,
+        }
+        secret_key = os.environ.get('JWT_SECRET_KEY') + str(password) + user_id
+        token = jwt.encode(
+            payload,
+            secret_key,
+            algorithm='HS256',
+        ).decode("utf-8")
+        return token
+    except Exception as e:
+        raise ValueError('token generation failed: {}'.format(str(e)))
 
 def decode_token(token, user_id, password):
     if token is None:
@@ -35,6 +51,11 @@ def decode_token(token, user_id, password):
         payload = jwt.decode(token, secret_key)
 
         return {"_id": payload['sub'], "role": payload['role']}
+
+    except jwt.ExpiredSignatureError:
+        raise ValueError('Signature expired. Please log in again.')
+    except jwt.InvalidTokenError:
+        raise ValueError('Invalid token. Please log in again.')
     except Exception as error:
         raise ValueError("token encoding error: " + str(error))
 
