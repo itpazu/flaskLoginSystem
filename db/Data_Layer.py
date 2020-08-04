@@ -1,4 +1,4 @@
-from flask import request, jsonify, json
+from flask import request
 from models.user import User
 from Util import decode_token, encode_token, generate_id, decode_refresh_token, encode_refresh_token
 
@@ -56,8 +56,7 @@ class DataLayer:
         except Exception as error:
             raise error
 
-    def log_user(self, email, password):
-
+    def log_user(self, email, password, attempt):
         verify_user_exists = self.get_doc_by_email(email)
         if verify_user_exists is None:
             raise ValueError('email does not exist in db')
@@ -72,10 +71,10 @@ class DataLayer:
                 csrf_token = secrets.token_hex()
                 self.store_token(user_id, generated_access_token, csrf_token, generated_refresh_token)
                 get_user_dict = self.get_doc_by_user_id(user_id)
-
                 return get_user_dict
-
-            raise ValueError('password is incorrect')
+            else:
+                attempt -= 1
+                return attempt
 
     def authenticate_user(self, user_id, token, csrf_token=None):
 
@@ -155,8 +154,6 @@ class DataLayer:
             raise ValueError('failed to update db')
         new_user_dic = self.get_doc_by_email(email)
         return new_user_dic
-
-
 
     def encrypt_pass(self, password):
         return self.bcrypt.generate_password_hash(password).decode('utf-8')
