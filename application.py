@@ -52,13 +52,22 @@ def token_required(f):
             dataLayer.authenticate_user(user_id, token, csrf_token)
 
         except Exception as err:
+            if str(err) == 'Signature expired':
+
+                response = application.response_class(
+                    response=json.dumps("signature expired"),
+                    status=403,
+                    mimetype='application/json',
+
+                )
+                return response
             response = application.response_class(
                 response=json.dumps("authentication failed:" + str(err)),
-                status=403,
+                status=401,
                 mimetype='application/json',
 
             )
-            return f(response, **kwargs)
+            return response
 
         return f(*args, **kwargs)
 
@@ -73,30 +82,67 @@ def admin_required(f):
             try:
                 content = request.json
                 csrf_token = request.headers.get('Authorization')
-                # token = request.headers.get('token')  # for dev only
 
-                cookie = request.cookies  ## commented out for development only
+                cookie = request.cookies
+                # token = request.headers.get('token')  ##for dev only
                 token = cookie.get('token')
                 user_id = content['_id']
 
             except Exception as error:
                 raise ValueError('{} data is missing in the request'.format(str(error)))
 
-            auth = dataLayer.authenticate_user(user_id, token, csrf_token)
-            if auth['role'] == 'admin':
-                return f(*args, **kwargs)
-            raise ValueError('Only admins are allowed to access this page')
+            dataLayer.authenticate_user(user_id, token, csrf_token)
 
         except Exception as err:
-            return application.response_class(
-                response=json.dumps("error " + str(err)),
-                status=403,
+            if str(err) == 'Signature expired':
+
+                response = application.response_class(
+                    response=json.dumps("authentication failed:" + str(err)),
+                    status=403,
+                    mimetype='application/json',
+
+                )
+                return response
+
+            response = application.response_class(
+                response=json.dumps("authentication failed:" + str(err)),
+                status=401,
                 mimetype='application/json',
 
             )
+            return response
+        return f(*args, **kwargs)
     return decorated
 
+def refresh_token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        try:
+            content = request.json
+            cookie = request.cookies          ## commented out for development only
 
+            try:
+                # ref_token = request.headers.get('refresh_token')  ##for dev only
+                ref_token = cookie.get('refresh_token')
+                user_id = content['_id']
+            except Exception as error:
+                raise ValueError('{} data is missing in the request'.format(str(error)))
+
+            authenticated_user = dataLayer.authenticate_refresh_token(user_id, ref_token)
+
+
+        except Exception as err:
+            response = application.response_class(
+                response=json.dumps("authentication failed:" + str(err)),
+                status=401,
+                mimetype='application/json',
+
+            )
+            return response
+
+        return f(authenticated_user, *args, **kwargs)
+
+    return decorated
 
 @application.route('/', methods=['POST', 'GET'])
 def health_check_aws():
@@ -104,13 +150,45 @@ def health_check_aws():
     return 'success', 200, {"Content-Type": "application/json"}
 
 
+@application.route('/refresh_token', methods=['POST', 'GET'])
+@refresh_token_required
+def refresh_token(user_dic):
+    try:
+        fresh_tokens = dataLayer.refresh_token(user_dic)
+        token = fresh_tokens['access_token']
+        refresh_token = fresh_tokens['refresh_token']
+
+        response = application.response_class(
+            response=json.dumps('authorized'),
+            status=200,
+            mimetype='application/json',
+            headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+                     'Access-Control-Allow-Credentials': "true",
+                     'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
+                     'Access-Control-Expose-Headers': ["Authorization"],
+                     }
+
+        )
+
+        response.set_cookie('token', value=token, httponly=True,
+                            domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
+                            path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
+                            samesite='none')
+        response.set_cookie('refresh_token', value=refresh_token, httponly=True,
+                            domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
+                            path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
+                            samesite='none')
+
+        return response
+
+    except Exception as error:
+        return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
+
+
 @application.route('/test', methods=['POST', 'GET'])
 @token_required
 # @admin_required
-def test_route(result):
-
-    if result.status == '403 FORBIDDEN':
-        return result
+def test_route():
 
     return 'HELLO KEEPER HOME', 200, {'Access-Control-Allow-Origin': "http://localhost:3000",
                                                                             'Access-Control-Allow-Credentials': "true",
@@ -135,6 +213,7 @@ def log_in():
             csrf_token = execute_login["csrf_token"]
             user_id = execute_login["_id"]
             token = execute_login["token"]
+            refresh_token = execute_login["refresh_token"]
             role = execute_login["role"]
             first_name = execute_login ["first_name"]
             last_name = execute_login ["last_name"]
@@ -147,15 +226,18 @@ def log_in():
                 headers={'Access-Control-Allow-Origin': "http://localhost:3000",
                          'Access-Control-Allow-Credentials': "true",
                          'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
-                         # 'Access-Control-Expose-Headers': ["Authorization", "token"], ### dev only
                          'Access-Control-Expose-Headers': ["Authorization"],
                          "Authorization":  csrf_token,
-                         # "token":  token #development only
+
                          }
 
             )
 
             response.set_cookie('token', value=token, httponly=True,
+                                domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
+                                path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
+                                samesite='none')
+            response.set_cookie('refresh_token', value=refresh_token, httponly=True,
                                 domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
                                 path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
                                 samesite='none')
@@ -180,7 +262,7 @@ def check_token_for_pass_reset():
                 token = request.headers.get('token')
                 user_id = content['_id']
             except Exception as error:
-                raise ValueError('{} data is missing in the request'.format(str(error)))
+                raise Exception('{} data is missing in the request'.format(str(error)))
 
             dataLayer.authenticate_user(user_id, token)
             response = application.response_class(
@@ -231,19 +313,16 @@ def all_users():
         return response
 
     except Exception as e:
-        return json.dumps(e, default=str), 401, {"Content-Type": "application/json"}
+        return json.dumps(e, default=str), 400, {"Content-Type": "application/json"}
 
 
 @application.route('/add_user', methods=["POST"])
 @admin_required
 def add_user():
     try:
+
         content = request.json
         added_user = dataLayer.add_user(content)
-    except Exception as e:
-        raise ValueError('the following error occurred when trying to add a new user: {}'.format(str(e)))
-
-    try:
         email_address = added_user['email']
         user_id = added_user['_id']
         token = added_user['token']
@@ -251,7 +330,7 @@ def add_user():
 
         return sent_mail
     except Exception as error:
-        return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
+        return json.dumps(error, default=str), 400, {"Content-Type": "application/json"}
 
 @application.route('/newpass_solicit', methods=['GET', 'POST'])
 def solicit_new_pass():

@@ -1,6 +1,7 @@
 from flask import request, jsonify, json
 from models.user import User
-from Util import decode_token, encode_access_token, generate_id
+from Util import decode_token, encode_token, generate_id, decode_refresh_token, encode_refresh_token
+
 import jwt
 import secrets
 
@@ -15,20 +16,25 @@ class DataLayer:
             raise ValueError('db update failed: {} '.format(e))
 
     def get_doc_by_email(self, email):
-
-        user_dict = self.__db.Users.find_one({"email": email})
-        if user_dict:
-            return user_dict
-        else:
-            return None
+        try:
+            user_dict = self.__db.Users.find_one({"email": email})
+            if user_dict:
+                return user_dict
+            else:
+                return None
+        except Exception as error:
+            raise Exception(str(error))
 
     def get_doc_by_user_id(self, user_id):
-        user_dict = self.__db.Users.find_one({"_id": user_id})
+        try:
+            user_dict = self.__db.Users.find_one({"_id": user_id})
 
-        if user_dict:
-            return user_dict
-        else:
-            return None
+            if user_dict:
+                return user_dict
+            else:
+                return None
+        except Exception as error:
+            raise Exception(str(error))
 
     def add_user(self, content):
         try:
@@ -42,7 +48,7 @@ class DataLayer:
                 raise ValueError('user already exists!')
             else:
                 password = self.encrypt_pass(secrets.token_hex())
-                token = encode_access_token(user_id, password, role)
+                token = encode_token(user_id, password, role)
                 new_user = User(user_id, last_name, first_name, email, password, role, token)
                 self.__db.Users.insert_one(new_user.__dict__)
                 added_user = self.get_doc_by_email(email)
@@ -61,9 +67,10 @@ class DataLayer:
             role = verify_user_exists['role']
             if compare_pass:
                 user_id = str(verify_user_exists['_id'])
-                generated_token = encode_access_token(user_id, db_password, role)
+                generated_access_token = encode_token(user_id, db_password, role)
+                generated_refresh_token = encode_refresh_token(user_id, db_password)
                 csrf_token = secrets.token_hex()
-                self.store_token(user_id, generated_token, csrf_token)
+                self.store_token(user_id, generated_access_token, csrf_token, generated_refresh_token)
                 get_user_dict = self.get_doc_by_user_id(user_id)
 
                 return get_user_dict
@@ -77,24 +84,57 @@ class DataLayer:
             raise ValueError('identification failed, user_id is either missing or incorrect')
 
         pass_from_db = user_from_db['password']
-        decoded_token = decode_token(token, user_id, pass_from_db)
 
         try:
-            if user_id != decoded_token['_id']:
-                raise ValueError('ID do not match. please log in again')
+            decoded_token = decode_token(token, user_id, pass_from_db)
 
-        except Exception as e:
-            raise e
+        except Exception as error:
+            raise Exception(error)
+
+
+        if user_id != decoded_token['_id']:
+            raise Exception('ID do not match. please log in again')
+
+        if decoded_token['role'] != 'admin':
+            raise Exception('user is not admin')
 
         if csrf_token is not None:
-            try:
-                csrf_from_db = user_from_db['csrf_token']
-                if str(csrf_token) != str(csrf_from_db):
-                    raise ValueError('csrf token is invalid!')
-            except ValueError as error:
-                raise error
+            csrf_from_db = user_from_db['csrf_token']
+            if str(csrf_token) != str(csrf_from_db):
+                raise Exception('csrf token is invalid!')
+
 
         return decoded_token
+
+
+    def authenticate_refresh_token(self, user_id, refresh_token):
+        try:
+            user_dic = self.get_doc_by_user_id(user_id)
+            if user_dic is None:
+                raise ValueError('identification failed, user_id is either missing or incorrect')
+            password = user_dic['password']
+            decode_refresh_token(refresh_token, user_id, password)
+            return user_dic
+        except Exception as error:
+            raise Exception(str(error))
+
+
+    def refresh_token(self, user_dic):
+        try:
+            user_id = user_dic['_id']
+            password = user_dic['password']
+            role = user_dic['role']
+
+            refresh_token = encode_refresh_token(user_id, password)
+            access_token = encode_token(user_id, password, role)
+
+            self.store_fresh_tokens(user_id, access_token, refresh_token)
+
+            return {'access_token': access_token, 'refresh_token': refresh_token}
+
+        except Exception as error:
+            raise Exception(str(error))
+
 
 
     def solcit_new_password(self, email):
@@ -104,14 +144,13 @@ class DataLayer:
         password = user_dic['password']
         user_id = user_dic['_id']
         role = user_dic['role']
-        csrf_token = secrets.token_hex()
 
         try:
-            token = encode_access_token(user_id, password, role)
+            reset_token = encode_token(user_id, password, role)
         except Exception as error:
             raise error
         try:
-            self.store_token(user_id, token, csrf_token)
+            self.store_reset_token(user_id, reset_token)
         except Exception as error:
             raise ValueError('failed to update db')
         new_user_dic = self.get_doc_by_email(email)
@@ -128,12 +167,29 @@ class DataLayer:
         else:
             return False
 
-    def store_token(self, user_id, token, csrf_token, refresh_token=None):
+    def store_token(self, user_id, access_token, csrf_token, refresh_token):
         try:
-            store_token = self.__db.Users.update({"_id": user_id}, {"$set": {"token": token, 'csrf_token': csrf_token }})
+            store_token = self.__db.Users.update({"_id": user_id}, {"$set": {"token": access_token,
+                                                                             'csrf_token': csrf_token,
+                                                                             'refresh_token': refresh_token }})
             return store_token
         except Exception as error:
-            raise ValueError('storage of new tokens failed: {}'.format(error))
+            raise('failed to store token' + str(error))
+
+    def store_fresh_tokens(self, user_id, access_token, refresh_token):
+        try:
+            store_token = self.__db.Users.update({"_id": user_id}, {"$set": {"token": access_token,
+                                                                             'refresh_token': refresh_token}})
+            return store_token
+        except Exception as error:
+            raise ('failed to store token' + str(error))
+
+    def store_reset_token(self, user_id, access_token):
+        try:
+            store_token = self.__db.Users.update({"_id": user_id}, {"$set": {"token": access_token}})
+            return store_token
+        except Exception as error:
+            raise('failed to store token' + str(error))
 
     def delete_user(self, _id):
         try:
