@@ -117,7 +117,6 @@ def test_route(result):
 
 @application.route('/login', methods=['POST', 'OPTIONS'])
 def log_in():
-    session['attempt'] = 5
     if request.method == "OPTIONS":
         return _build_cors_preflight_response()
     elif request.method == "POST":
@@ -130,16 +129,16 @@ def log_in():
             except Exception as error:
                 raise ValueError('{}, data is missing in the request'.format(str(error)))
 
-            attempt = session.get('attempt')
-            execute_login = dataLayer.log_user(email, password, attempt)
+            execute_login = dataLayer.log_user(email, password)
 
-            if type(execute_login) is dict:
+            if execute_login:
                 csrf_token = execute_login["csrf_token"]
                 user_id = execute_login["_id"]
                 token = execute_login["token"]
                 role = execute_login["role"]
                 first_name = execute_login["first_name"]
                 last_name = execute_login["last_name"]
+                session['attempts'] = 0
 
                 response = application.response_class(
                     response=json.dumps({"_id": user_id, "role": role, "first_name": first_name,
@@ -164,8 +163,9 @@ def log_in():
 
                 return response
             else:
-                session['attempt'] = execute_login
-                if session['attempt'] > 1:
+                session['attempts'] = session.get('attempts') + 1
+                print(session['attempts'])
+                if session['attempts'] < 5:
                     response = application.response_class(
                         response=json.dumps('password is incorrect'),
                         status=200,
@@ -179,11 +179,10 @@ def log_in():
                                  }
                     )
 
-                    response.set_cookie('attempts', value=session["attempt"], httponly=True,
+                    response.set_cookie('attempts', value=str(session["attempts"]), httponly=True,
                                         domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
                                         path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
                                         samesite='none')
-
                     return response
 
                 else:

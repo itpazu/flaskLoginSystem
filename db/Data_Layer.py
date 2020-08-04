@@ -49,7 +49,7 @@ class DataLayer:
         except Exception as error:
             raise error
 
-    def log_user(self, email, password, attempt):
+    def log_user(self, email, password):
         verify_user_exists = self.get_doc_by_email(email)
         if verify_user_exists is None:
             raise ValueError('email does not exist in db')
@@ -64,9 +64,6 @@ class DataLayer:
                 self.store_token(user_id, generated_token, csrf_token)
                 get_user_dict = self.get_doc_by_user_id(user_id)
                 return get_user_dict
-            else:
-                attempt -= 1
-                return attempt
 
     def authenticate_user(self, user_id, token, csrf_token=None):
 
