@@ -36,7 +36,7 @@ def token_required(f):
     def decorated(*args, **kwargs):
         try:
             content = request.json
-            cookie = request.cookies          ## commented out for development only
+            cookie = request.cookies  # commented out for development only
 
             try:
                 csrf_token = request.headers.get('Authorization')
@@ -97,7 +97,6 @@ def admin_required(f):
                     response=json.dumps("authentication failed:" + str(err)),
                     status=403,
                     mimetype='application/json',
-
                 )
                 return response
 
@@ -105,18 +104,18 @@ def admin_required(f):
                 response=json.dumps("authentication failed:" + str(err)),
                 status=401,
                 mimetype='application/json',
-
             )
             return response
         return f(*args, **kwargs)
     return decorated
+
 
 def refresh_token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         try:
             content = request.json
-            cookie = request.cookies          ## commented out for development only
+            cookie = request.cookies  # commented out for development only
 
             try:
                 # ref_token = request.headers.get('refresh_token')  ##for dev only
@@ -127,13 +126,11 @@ def refresh_token_required(f):
 
             authenticated_user = dataLayer.authenticate_refresh_token(user_id, ref_token)
 
-
         except Exception as err:
             response = application.response_class(
                 response=json.dumps("authentication failed:" + str(err)),
                 status=401,
                 mimetype='application/json',
-
             )
 
             return response
@@ -189,8 +186,8 @@ def refresh_token(user_dic):
 def test_route():
 
     return 'HELLO KEEPER HOME', 200, {'Access-Control-Allow-Origin': "http://localhost:3000",
-                                                                            'Access-Control-Allow-Credentials': "true",
-                                                                            'Access-Control-Allow-Headers': ["Content-Type", "Authorization"]
+                                      'Access-Control-Allow-Credentials': "true",
+                                      'Access-Control-Allow-Headers': ["Content-Type", "Authorization"]
                                       }
 
 
@@ -218,8 +215,8 @@ def log_in():
                 token = execute_login["token"]
                 refresh_token = execute_login["refresh_token"]
                 role = execute_login["role"]
-                first_name = execute_login ["first_name"]
-                last_name = execute_login ["last_name"]
+                first_name = execute_login["first_name"]
+                last_name = execute_login["last_name"]
 
                 response = application.response_class(
                     response=json.dumps({"_id": user_id, "role": role, "first_name": first_name,
@@ -332,7 +329,6 @@ def all_users():
 @admin_required
 def add_user():
     try:
-
         content = request.json
         added_user = dataLayer.add_user(content)
         email_address = added_user['email']
@@ -341,6 +337,7 @@ def add_user():
         sent_mail = send_password_by_mail(email_address, user_id, token)
 
         return sent_mail
+
     except Exception as error:
         return json.dumps(error, default=str), 400, {"Content-Type": "application/json"}
 
@@ -428,34 +425,30 @@ def change_password():
         content = request.json
         changed_password = dataLayer.change_password(content)
 
-        response = application.response_class(response=json.dumps("Password has been changed successfully:" + changed_password),
+        response = application.response_class(response=json.dumps("Password has been changed successfully:" +
+                                                                  changed_password),
                                               status=200,
                                               mimetype='application/json',
-                                              headers= {'Access-Control-Allow-Origin': "http://localhost:3000",
-                                          'Access-Control-Allow-Credentials': "true",
-                                          'Access-Control-Allow-Headers': ["Content-Type"]})
-
+                                              headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+                                                       'Access-Control-Allow-Credentials': "true",
+                                                       'Access-Control-Allow-Headers': ["Content-Type"]}
+                                              )
         return response
-
     except Exception as err:
-
         response = application.response_class(response=json.dumps("update failed:" + str(err)),
                                               status=401,
                                               mimetype='application/json')
-
         return response
 
 
 def _build_cors_preflight_response():
     response = application.response_class(
-
         status=200,
         mimetype='application/json',
         headers={'Access-Control-Allow-Origin': "http://localhost:3000", 'Access-Control-Allow-Credentials': "true",
                  'Access-Control-Allow-Headers': ["Content-Type", "token"]}
 
     )
-
     return response
 
 
@@ -480,7 +473,6 @@ def send_password_by_mail(email_address, user_id, token):
                  'Access-Control-Allow-Credentials': "true",
                  'Access-Control-Allow-Headers': "Content-Type",
                  }
-
     )
     return resp
 

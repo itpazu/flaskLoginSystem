@@ -2,6 +2,7 @@ from flask import request
 from models.user import User
 from Util import decode_token, encode_token, generate_id, decode_refresh_token, encode_refresh_token
 import secrets
+from datetime import datetime
 
 
 class DataLayer:
@@ -160,7 +161,7 @@ class DataLayer:
         except Exception as error:
             raise error
         try:
-            self.store_reset_token(user_id, reset_token) #store new pass
+            self.store_reset_token(user_id, reset_token)  # store new pass
         except Exception as error:
             raise ValueError('failed to update db')
         new_user_dic = self.get_doc_by_email(email)
@@ -179,7 +180,7 @@ class DataLayer:
         try:
             store_token = self.__db.Users.update({"_id": user_id}, {"$set": {"token": access_token,
                                                                              'csrf_token': csrf_token,
-                                                                             'refresh_token': refresh_token }})
+                                                                             'refresh_token': refresh_token}})
             return store_token
         except Exception as error:
             raise('failed to store token' + str(error))
@@ -317,8 +318,8 @@ class DataLayer:
 
         try:
             changed_password = self.__db.Users.find_one_and_update({"_id": user_id}, {"$set": {"password": hashedpass,
-                                                                                "last_update_time":
-                                                                                    User.updated_at()}})
+                                                                                      "last_update_time":
+                                                                                               User.updated_at()}})
             if changed_password is None:
                 raise ValueError('User might not exists in db')
             return changed_password['_id']
@@ -341,8 +342,12 @@ class DataLayer:
                 return {"ip_address": self.get_doc_by_ip_address_attempt(ip_address)["attempts"],
                         "email": self.get_doc_by_email_address_attempt(email)["attempts"]}
             else:
-                self.__db.ipAttempts.insert_one({"ip_address": ip_address, "attempts": 1})
-                self.__db.emailAttempts.insert_one({"email": email, "attempts": 1})
+                self.__db.ipAttempts.create_index("createdAt", expireAfterSeconds=86400)
+                self.__db.ipAttempts.insert_one({"ip_address": ip_address, "attempts": 1,
+                                                 "createdAt": datetime.utcnow()})
+                self.__db.emailAttempts.create_index("createdAt", expireAfterSeconds=86400)
+                self.__db.emailAttempts.insert_one({"email": email, "attempts": 1,
+                                                    "createdAt": datetime.utcnow()})
                 return {"ip_address_attempts": self.get_doc_by_ip_address_attempt(ip_address)["attempts"],
                         "email": self.get_doc_by_email_address_attempt(email)["attempts"]}
         except Exception as error:
