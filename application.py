@@ -1,4 +1,4 @@
-from flask import Flask, json, request, make_response, render_template
+from flask import Flask, json, request, render_template, session
 import pymongo
 from flask_cors import CORS
 import os
@@ -21,6 +21,7 @@ mail_settings = {
 
 load_dotenv()
 application = Flask(__name__)
+application.secret_key = os.urandom(24)
 CORS(application)
 CORS(application, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:3000"}})
 bcrypt = Bcrypt(application)
@@ -31,19 +32,18 @@ mail = Mail(application)
 dataLayer = DataLayer(bcrypt, __client)
 
 
-
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         try:
             content = request.json
-            cookie = request.cookies          ## commented out for development only
+            cookie = request.cookies  # commented out for development only
 
             try:
                 csrf_token = request.headers.get('Authorization')
                 if csrf_token is None:
                     raise ValueError('csrf')
-                # token = request.headers.get('token')  ##for dev only
+                # token = request.headers.get('token')  # for dev only
                 token = cookie.get('token')
                 user_id = content['_id']
             except Exception as error:
@@ -65,7 +65,6 @@ def token_required(f):
     return decorated
 
 
-
 def admin_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -75,7 +74,7 @@ def admin_required(f):
                 csrf_token = request.headers.get('Authorization')
                 # token = request.headers.get('token')  # for dev only
 
-                cookie = request.cookies  ## commented out for development only
+                cookie = request.cookies  # commented out for development only
                 token = cookie.get('token')
                 user_id = content['_id']
 
@@ -94,13 +93,12 @@ def admin_required(f):
                 mimetype='application/json',
 
             )
-    return decorated
 
+    return decorated
 
 
 @application.route('/', methods=['POST', 'GET'])
 def health_check_aws():
-
     return 'success', 200, {"Content-Type": "application/json"}
 
 
@@ -108,17 +106,18 @@ def health_check_aws():
 @token_required
 # @admin_required
 def test_route(result):
-
     if result.status == '403 FORBIDDEN':
         return result
 
     return 'HELLO KEEPER HOME', 200, {'Access-Control-Allow-Origin': "http://localhost:3000",
-                                                                            'Access-Control-Allow-Credentials': "true",
-                                                                            'Access-Control-Allow-Headers': ["Content-Type", "Authorization"]
+                                      'Access-Control-Allow-Credentials': "true",
+                                      'Access-Control-Allow-Headers': ["Content-Type", "Authorization"]
                                       }
+
 
 @application.route('/login', methods=['POST', 'OPTIONS'])
 def log_in():
+    session['attempt'] = 5
     if request.method == "OPTIONS":
         return _build_cors_preflight_response()
     elif request.method == "POST":
@@ -131,37 +130,64 @@ def log_in():
             except Exception as error:
                 raise ValueError('{}, data is missing in the request'.format(str(error)))
 
-            execute_login = dataLayer.log_user(email, password)
-            csrf_token = execute_login["csrf_token"]
-            user_id = execute_login["_id"]
-            token = execute_login["token"]
-            role = execute_login["role"]
-            first_name = execute_login ["first_name"]
-            last_name = execute_login ["last_name"]
+            attempt = session.get('attempt')
+            execute_login = dataLayer.log_user(email, password, attempt)
 
-            response = application.response_class(
-                response=json.dumps({"_id": user_id, "role": role, "first_name": first_name,
-                                     "last_name": last_name}),
-                status=200,
-                mimetype='application/json',
-                headers={'Access-Control-Allow-Origin': "http://localhost:3000",
-                         'Access-Control-Allow-Credentials': "true",
-                         'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
-                         # 'Access-Control-Expose-Headers': ["Authorization", "token"], ### dev only
-                         'Access-Control-Expose-Headers': ["Authorization"],
-                         "Authorization":  csrf_token,
-                         # "token":  token #development only
-                         }
+            if type(execute_login) is dict:
+                csrf_token = execute_login["csrf_token"]
+                user_id = execute_login["_id"]
+                token = execute_login["token"]
+                role = execute_login["role"]
+                first_name = execute_login["first_name"]
+                last_name = execute_login["last_name"]
 
-            )
+                response = application.response_class(
+                    response=json.dumps({"_id": user_id, "role": role, "first_name": first_name,
+                                         "last_name": last_name}),
+                    status=200,
+                    mimetype='application/json',
+                    headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+                             'Access-Control-Allow-Credentials': "true",
+                             'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
+                             # 'Access-Control-Expose-Headers': ["Authorization", "token"],  # dev only
+                             # 'Access-Control-Expose-Headers': ["Authorization"],
+                             "Authorization": csrf_token
+                             # "token":  token  # development only
+                             }
 
-            response.set_cookie('token', value=token, httponly=True,
-                                domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
-                                path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
-                                samesite='none')
+                )
 
+                response.set_cookie('token', value=token, httponly=True,
+                                    domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
+                                    path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
+                                    samesite='none')
 
-            return response
+                return response
+            else:
+                session['attempt'] = execute_login
+                if session['attempt'] > 1:
+                    response = application.response_class(
+                        response=json.dumps('password is incorrect'),
+                        status=200,
+                        mimetype='application/json',
+                        headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+                                 'Access-Control-Allow-Credentials': "true",
+                                 'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
+                                 # 'Access-Control-Expose-Headers': ["Authorization", "token"], ### dev only
+                                 'Access-Control-Expose-Headers': ["Authorization"]
+                                 # "token":  token #development only
+                                 }
+                    )
+
+                    response.set_cookie('attempts', value=session["attempt"], httponly=True,
+                                        domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
+                                        path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
+                                        samesite='none')
+
+                    return response
+
+                else:
+                    return solicit_new_pass()
 
         except Exception as error:
             return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
@@ -169,14 +195,13 @@ def log_in():
 
 @application.route('/check_token', methods=['GET', 'POST', 'OPTIONS'])
 def check_token_for_pass_reset():
-
     if request.method == "OPTIONS":
         return _build_cors_preflight_response()
 
     elif request.method == "POST":
         try:
             try:
-                content= request.json
+                content = request.json
                 token = request.headers.get('token')
                 user_id = content['_id']
             except Exception as error:
@@ -188,9 +213,9 @@ def check_token_for_pass_reset():
                 status=200,
                 mimetype='application/json',
                 headers={'Access-Control-Allow-Origin': "http://localhost:3000",
-                             'Access-Control-Allow-Credentials': "true",
-                             'Access-Control-Allow-Headers': "Content-Type",
-                             }
+                         'Access-Control-Allow-Credentials': "true",
+                         'Access-Control-Allow-Headers': "Content-Type",
+                         }
 
             )
             return response
@@ -199,12 +224,8 @@ def check_token_for_pass_reset():
             return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
 
 
-
-
-
 @application.route('/logout', methods=['GET', 'POST'])
 def logout():
-
     response = application.response_class(
         response='logout',
         status=200,
@@ -253,6 +274,7 @@ def add_user():
     except Exception as error:
         return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
 
+
 @application.route('/newpass_solicit', methods=['GET', 'POST'])
 def solicit_new_pass():
     try:
@@ -261,7 +283,7 @@ def solicit_new_pass():
 
         except Exception as error:
             raise ValueError('{} data is missing in the request'.format(str(error)))
-        user_dic = dataLayer.solcit_new_password(email)
+        user_dic = dataLayer.solicit_new_password(email)
         if user_dic is None:
             raise ValueError('user does not exist in db')
 
@@ -280,7 +302,7 @@ def solicit_new_pass():
 def delete_user():
     try:
         content = request.json
-        _id = content['user_id'] ### must stay user_id!
+        _id = content['user_id']  # must stay user_id!
         deleted_user = dataLayer.delete_user(_id)
         resp = json.dumps(deleted_user, default=str), 200, {"Content-Type": "application/json"}
         return resp
@@ -336,12 +358,13 @@ def change_password():
         content = request.json
         changed_password = dataLayer.change_password(content)
 
-        response = application.response_class(response=json.dumps("Password has been changed successfully:" + changed_password),
-                                              status=200,
-                                              mimetype='application/json',
-                                              headers= {'Access-Control-Allow-Origin': "http://localhost:3000",
-                                          'Access-Control-Allow-Credentials': "true",
-                                          'Access-Control-Allow-Headers': ["Content-Type"]})
+        response = application.response_class(
+            response=json.dumps("Password has been changed successfully:" + changed_password),
+            status=200,
+            mimetype='application/json',
+            headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+                     'Access-Control-Allow-Credentials': "true",
+                     'Access-Control-Allow-Headers': ["Content-Type"]})
 
         return response
 
@@ -355,7 +378,6 @@ def change_password():
 
 
 def _build_cors_preflight_response():
-
     response = application.response_class(
 
         status=200,
@@ -367,8 +389,8 @@ def _build_cors_preflight_response():
 
     return response
 
-def send_password_by_mail(email_address, user_id, token):
 
+def send_password_by_mail(email_address, user_id, token):
     try:
         url = 'http://localhost:3000/change_pass/path?id=' + user_id + '&token=' + token
 
@@ -392,6 +414,7 @@ def send_password_by_mail(email_address, user_id, token):
 
     )
     return resp
+
 
 if __name__ == "__main__":
     port = os.environ.get('PORT')
