@@ -57,6 +57,7 @@ class DataLayer:
             raise error
 
     def log_user(self, email, password):
+
         verify_user_exists = self.get_doc_by_email(email)
         if verify_user_exists is None:
             raise ValueError('email does not exist in db')
@@ -71,7 +72,10 @@ class DataLayer:
                 csrf_token = secrets.token_hex()
                 self.store_token(user_id, generated_access_token, csrf_token, generated_refresh_token)
                 get_user_dict = self.get_doc_by_user_id(user_id)
+
                 return get_user_dict
+
+            raise ValueError('password is incorrect')
 
     def authenticate_user(self, user_id, token, csrf_token=None):
 
@@ -137,16 +141,16 @@ class DataLayer:
         user_dic = self.get_doc_by_email(email)
         if user_dic is None:
             return None
-        password = user_dic['password']
+        password = user_dic['password']  # db
         user_id = user_dic['_id']
         role = user_dic['role']
-
+        # generate new password
         try:
             reset_token = encode_token(user_id, password, role)
         except Exception as error:
             raise error
         try:
-            self.store_reset_token(user_id, reset_token)
+            self.store_reset_token(user_id, reset_token) #store new pass
         except Exception as error:
             raise ValueError('failed to update db')
         new_user_dic = self.get_doc_by_email(email)

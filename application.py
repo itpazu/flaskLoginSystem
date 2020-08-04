@@ -1,4 +1,4 @@
-from flask import Flask, json, request, render_template, session
+from flask import Flask, json, request, render_template
 import pymongo
 from flask_cors import CORS
 import os
@@ -21,7 +21,6 @@ mail_settings = {
 
 load_dotenv()
 application = Flask(__name__)
-application.secret_key = os.urandom(24)
 CORS(application)
 CORS(application, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:3000"}})
 bcrypt = Bcrypt(application)
@@ -210,68 +209,40 @@ def log_in():
                 raise ValueError('{}, data is missing in the request'.format(str(error)))
 
             execute_login = dataLayer.log_user(email, password)
+            csrf_token = execute_login["csrf_token"]
+            user_id = execute_login["_id"]
+            token = execute_login["token"]
+            refresh_token = execute_login["refresh_token"]
+            role = execute_login["role"]
+            first_name = execute_login ["first_name"]
+            last_name = execute_login ["last_name"]
 
-            if execute_login:
-                csrf_token = execute_login["csrf_token"]
-                user_id = execute_login["_id"]
-                token = execute_login["token"]
-                refresh_token = execute_login["refresh_token"]
-                role = execute_login["role"]
-                first_name = execute_login["first_name"]
-                last_name = execute_login["last_name"]
-                session['attempts'] = 0
+            response = application.response_class(
+                response=json.dumps({"_id": user_id, "role": role, "first_name": first_name,
+                                     "last_name": last_name}),
+                status=200,
+                mimetype='application/json',
+                headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+                         'Access-Control-Allow-Credentials': "true",
+                         'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
+                         'Access-Control-Expose-Headers': ["Authorization"],
+                         "Authorization":  csrf_token,
 
-                response = application.response_class(
-                    response=json.dumps({"_id": user_id, "role": role, "first_name": first_name,
-                                         "last_name": last_name}),
-                    status=200,
-                    mimetype='application/json',
-                    headers={'Access-Control-Allow-Origin': "http://localhost:3000",
-                             'Access-Control-Allow-Credentials': "true",
-                             'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
-                             'Access-Control-Expose-Headers': ["Authorization"],
-                             "Authorization":  csrf_token,
+                         }
 
-                             }
+            )
 
-                )
-
-                response.set_cookie('token', value=token, httponly=True,
-                                    domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
-                                    path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
-                                    samesite='none')
-                response.set_cookie('refresh_token', value=refresh_token, httponly=True,
-                                    domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
-                                    path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
-                                    samesite='none')
+            response.set_cookie('token', value=token, httponly=True,
+                                domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
+                                path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
+                                samesite='none')
+            response.set_cookie('refresh_token', value=refresh_token, httponly=True,
+                                domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
+                                path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
+                                samesite='none')
 
 
-                return response
-            else:
-                session['attempts'] = session.get('attempts') + 1
-                print(session['attempts'])
-                if session['attempts'] < 5:
-                    response = application.response_class(
-                        response=json.dumps('password is incorrect'),
-                        status=200,
-                        mimetype='application/json',
-                        headers={'Access-Control-Allow-Origin': "http://localhost:3000",
-                                 'Access-Control-Allow-Credentials': "true",
-                                 'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
-                                 # 'Access-Control-Expose-Headers': ["Authorization", "token"], ### dev only
-                                 'Access-Control-Expose-Headers': ["Authorization"]
-                                 # "token":  token #development only
-                                 }
-                    )
-
-                    response.set_cookie('attempts', value=str(session["attempts"]), httponly=True,
-                                        domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
-                                        path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
-                                        samesite='none')
-                    return response
-
-                else:
-                    return solicit_new_pass()
+            return response
 
         except Exception as error:
             return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
