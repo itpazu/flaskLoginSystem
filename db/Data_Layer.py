@@ -1,8 +1,6 @@
 from flask import request
 from models.user import User
 from Util import decode_token, encode_token, generate_id, decode_refresh_token, encode_refresh_token
-
-import jwt
 import secrets
 
 
@@ -18,6 +16,26 @@ class DataLayer:
     def get_doc_by_email(self, email):
         try:
             user_dict = self.__db.Users.find_one({"email": email})
+            if user_dict:
+                return user_dict
+            else:
+                return None
+        except Exception as error:
+            raise Exception(str(error))
+
+    def get_doc_by_ip_address_attempt(self, ip_address):
+        try:
+            user_dict = self.__db.ipAttempts.find_one({"ip_address": ip_address})
+            if user_dict:
+                return user_dict
+            else:
+                return None
+        except Exception as error:
+            raise Exception(str(error))
+
+    def get_doc_by_email_address_attempt(self, email):
+        try:
+            user_dict = self.__db.emailAttempts.find_one({"email": email})
             if user_dict:
                 return user_dict
             else:
@@ -75,8 +93,6 @@ class DataLayer:
 
                 return get_user_dict
 
-            raise ValueError('password is incorrect')
-
     def authenticate_user(self, user_id, token, csrf_token=None):
 
         user_from_db = self.get_doc_by_user_id(user_id)
@@ -91,7 +107,6 @@ class DataLayer:
         except Exception as error:
             raise Exception(error)
 
-
         if user_id != decoded_token['_id']:
             raise Exception('ID do not match. please log in again')
 
@@ -103,9 +118,7 @@ class DataLayer:
             if str(csrf_token) != str(csrf_from_db):
                 raise Exception('csrf token is invalid!')
 
-
         return decoded_token
-
 
     def authenticate_refresh_token(self, user_id, refresh_token):
         try:
@@ -117,7 +130,6 @@ class DataLayer:
             return user_dic
         except Exception as error:
             raise Exception(str(error))
-
 
     def refresh_token(self, user_dic):
         try:
@@ -134,8 +146,6 @@ class DataLayer:
 
         except Exception as error:
             raise Exception(str(error))
-
-
 
     def solcit_new_password(self, email):
         user_dic = self.get_doc_by_email(email)
@@ -313,6 +323,40 @@ class DataLayer:
                 raise ValueError('User might not exists in db')
             return changed_password['_id']
 
+        except Exception as error:
+            raise error
+
+    def log_attempt(self, ip_address, email):
+        try:
+            check_if_ip_address_attempted = self.__db.ipAttempts.find_one({"ip_address": ip_address})
+            check_if_email_address_attempted = self.__db.emailAttempts.find_one({"email": email})
+            check_if_email_address_exists = self.__db.Users.find_one({"email": email})
+            if check_if_ip_address_attempted is not None and check_if_email_address_attempted is not None and \
+                    check_if_email_address_exists is not None:
+                self.__db.ipAttempts.find_one_and_update({"ip_address": ip_address}, {"$set":
+                                                         {"attempts": check_if_ip_address_attempted["attempts"] + 1}})
+                self.__db.emailAttempts.find_one_and_update({"email": email},
+                                                            {"$set": {"attempts": check_if_email_address_attempted[
+                                                                                      "attempts"] + 1}})
+                return {"ip_address": self.get_doc_by_ip_address_attempt(ip_address)["attempts"],
+                        "email": self.get_doc_by_email_address_attempt(email)["attempts"]}
+            else:
+                self.__db.ipAttempts.insert_one({"ip_address": ip_address, "attempts": 1})
+                self.__db.emailAttempts.insert_one({"email": email, "attempts": 1})
+                return {"ip_address_attempts": self.get_doc_by_ip_address_attempt(ip_address)["attempts"],
+                        "email": self.get_doc_by_email_address_attempt(email)["attempts"]}
+        except Exception as error:
+            raise error
+
+    def reset_ip_attempts(self, ip_address):
+        try:
+            self.__db.Attempt.find_one_and_update({"ip_address": ip_address}, {"$set": {"attempts": 0}})
+        except Exception as error:
+            raise error
+
+    def reset_email_attempts(self, email):
+        try:
+            self.__db.Attempt.find_one_and_update({"email": email}, {"$set": {"attempts": 0}})
         except Exception as error:
             raise error
 

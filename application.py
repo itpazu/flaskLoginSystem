@@ -209,40 +209,58 @@ def log_in():
                 raise ValueError('{}, data is missing in the request'.format(str(error)))
 
             execute_login = dataLayer.log_user(email, password)
-            csrf_token = execute_login["csrf_token"]
-            user_id = execute_login["_id"]
-            token = execute_login["token"]
-            refresh_token = execute_login["refresh_token"]
-            role = execute_login["role"]
-            first_name = execute_login ["first_name"]
-            last_name = execute_login ["last_name"]
 
-            response = application.response_class(
-                response=json.dumps({"_id": user_id, "role": role, "first_name": first_name,
-                                     "last_name": last_name}),
-                status=200,
-                mimetype='application/json',
-                headers={'Access-Control-Allow-Origin': "http://localhost:3000",
-                         'Access-Control-Allow-Credentials': "true",
-                         'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
-                         'Access-Control-Expose-Headers': ["Authorization"],
-                         "Authorization":  csrf_token,
+            ip_address = request.remote_addr
 
-                         }
+            if execute_login:
+                csrf_token = execute_login["csrf_token"]
+                user_id = execute_login["_id"]
+                token = execute_login["token"]
+                refresh_token = execute_login["refresh_token"]
+                role = execute_login["role"]
+                first_name = execute_login ["first_name"]
+                last_name = execute_login ["last_name"]
 
-            )
+                response = application.response_class(
+                    response=json.dumps({"_id": user_id, "role": role, "first_name": first_name,
+                                         "last_name": last_name}),
+                    status=200,
+                    mimetype='application/json',
+                    headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+                             'Access-Control-Allow-Credentials': "true",
+                             'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
+                             'Access-Control-Expose-Headers': ["Authorization"],
+                             "Authorization": csrf_token,
+                             }
+                )
 
-            response.set_cookie('token', value=token, httponly=True,
-                                domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
-                                path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
-                                samesite='none')
-            response.set_cookie('refresh_token', value=refresh_token, httponly=True,
-                                domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
-                                path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
-                                samesite='none')
+                response.set_cookie('token', value=token, httponly=True,
+                                    domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
+                                    path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
+                                    samesite='none')
+                response.set_cookie('refresh_token', value=refresh_token, httponly=True,
+                                    domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
+                                    path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
+                                    samesite='none')
+                return response
 
-
-            return response
+            else:
+                failed_attempt = dataLayer.log_attempt(ip_address, email)
+                if failed_attempt["ip_address"] > 4 > failed_attempt["email"]:
+                    dataLayer.reset_ip_attempts(ip_address)
+                    solicit_new_pass()
+                    raise ValueError('too many failed attempts, a password reset has been sent to your email.')
+                elif failed_attempt["email"] > 4 > failed_attempt["ip_address"]:
+                    dataLayer.reset_email_attempts(email)
+                    solicit_new_pass()
+                    raise ValueError('too many failed attempts, a password reset has been sent to your email.')
+                elif failed_attempt["ip_address"] > 4 and failed_attempt["email"] > 4:
+                    dataLayer.reset_ip_attempts(ip_address)
+                    dataLayer.reset_email_attempts(email)
+                    solicit_new_pass()
+                    raise ValueError('too many failed attempts, a password reset has been sent to your email.')
+                else:
+                    raise ValueError('password is incorrect')
 
         except Exception as error:
             return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
