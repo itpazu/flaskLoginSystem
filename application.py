@@ -246,36 +246,21 @@ def log_in():
 
             else:
                 failed_attempt = dataLayer.log_attempt(ip_address, email)
-                if "ip_address" in failed_attempt and "email" in failed_attempt:
-                    if failed_attempt["ip_address"] > 4 > failed_attempt["email"]:
-                        dataLayer.delete_ip_attempts(ip_address)
-                        solicit_new_pass()
-                        raise ValueError('too many failed attempts, a password reset has been sent to your email.')
-                    elif failed_attempt["email"] > 4 > failed_attempt["ip_address"]:
-                        dataLayer.delete_email_attempts(email)
-                        solicit_new_pass()
-                        raise ValueError('too many failed attempts, a password reset has been sent to your email.')
-                    elif failed_attempt["ip_address"] > 4 and failed_attempt["email"] > 4:
-                        dataLayer.delete_ip_attempts(ip_address)
-                        dataLayer.delete_email_attempts(email)
-                        solicit_new_pass()
-                        raise ValueError('too many failed attempts, a password reset has been sent to your email.')
-                    else:
-                        raise ValueError('password is incorrect')
-                elif "ip_address" in failed_attempt and "email" not in failed_attempt:
-                    if failed_attempt["ip_address"] > 4:
-                        dataLayer.delete_ip_attempts(ip_address)
-                        solicit_new_pass()
-                        raise ValueError('too many failed attempts, a password reset has been sent to your email.')
-                    else:
-                        raise ValueError('password is incorrect')
-                elif "ip_address" not in failed_attempt and "email" in failed_attempt:
-                    if failed_attempt["email"] > 4:
-                        dataLayer.delete_email_attempts(email)
-                        solicit_new_pass()
-                        raise ValueError('too many failed attempts, a password reset has been sent to your email.')
-                    else:
-                        raise ValueError('password is incorrect')
+                if failed_attempt["ip_address"] > 4 > failed_attempt["email"]:
+                    dataLayer.delete_ip_attempts(ip_address)
+                    solicit_new_pass()
+                    raise ValueError('too many failed attempts, a password reset has been sent to your email.')
+                elif failed_attempt["email"] > 4 > failed_attempt["ip_address"]:
+                    dataLayer.delete_email_attempts(email)
+                    solicit_new_pass()
+                    raise ValueError('too many failed attempts, a password reset has been sent to your email.')
+                elif failed_attempt["ip_address"] > 4 and failed_attempt["email"] > 4:
+                    dataLayer.delete_ip_attempts(ip_address)
+                    dataLayer.delete_email_attempts(email)
+                    solicit_new_pass()
+                    raise ValueError('too many failed attempts, a password reset has been sent to your email.')
+                else:
+                    raise ValueError('password is incorrect')
 
         except Exception as error:
             return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
