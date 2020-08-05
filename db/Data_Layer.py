@@ -148,7 +148,7 @@ class DataLayer:
         except Exception as error:
             raise Exception(str(error))
 
-    def solcit_new_password(self, email):
+    def solicit_new_password(self, email):
         user_dic = self.get_doc_by_email(email)
         if user_dic is None:
             return None
@@ -331,7 +331,7 @@ class DataLayer:
         try:
             check_if_ip_address_attempted = self.__db.ipAttempts.find_one({"ip_address": ip_address})
             check_if_email_address_attempted = self.__db.emailAttempts.find_one({"email": email})
-            check_if_email_address_exists = self.__db.Users.find_one({"email": email})
+            check_if_email_address_exists = self.get_doc_by_email(email)
             if check_if_ip_address_attempted is not None and check_if_email_address_attempted is not None and \
                     check_if_email_address_exists is not None:
                 self.__db.ipAttempts.find_one_and_update({"ip_address": ip_address}, {"$set":
@@ -341,27 +341,54 @@ class DataLayer:
                                                                                       "attempts"] + 1}})
                 return {"ip_address": self.get_doc_by_ip_address_attempt(ip_address)["attempts"],
                         "email": self.get_doc_by_email_address_attempt(email)["attempts"]}
-            else:
+            elif check_if_ip_address_attempted is None and check_if_email_address_attempted is not None and \
+                    check_if_email_address_exists is not None:
+                self.__db.emailAttempts.find_one_and_update({"email": email},
+                                                            {"$set": {"attempts": check_if_email_address_attempted[
+                                                                                      "attempts"] + 1}})
+                return {"email": self.get_doc_by_email_address_attempt(email)["attempts"]}
+            elif check_if_ip_address_attempted is None and check_if_email_address_attempted is None and \
+                    check_if_email_address_exists is not None:
                 self.__db.ipAttempts.create_index("createdAt", expireAfterSeconds=86400)
                 self.__db.ipAttempts.insert_one({"ip_address": ip_address, "attempts": 1,
                                                  "createdAt": datetime.utcnow()})
                 self.__db.emailAttempts.create_index("createdAt", expireAfterSeconds=86400)
                 self.__db.emailAttempts.insert_one({"email": email, "attempts": 1,
                                                     "createdAt": datetime.utcnow()})
-                return {"ip_address_attempts": self.get_doc_by_ip_address_attempt(ip_address)["attempts"],
+                return {"ip_address": self.get_doc_by_ip_address_attempt(ip_address)["attempts"],
                         "email": self.get_doc_by_email_address_attempt(email)["attempts"]}
+            elif check_if_ip_address_attempted is not None and check_if_email_address_attempted is None and \
+                    check_if_email_address_exists is not None:
+                self.__db.emailAttempts.create_index("createdAt", expireAfterSeconds=86400)
+                self.__db.emailAttempts.insert_one({"email": email, "attempts": 1,
+                                                    "createdAt": datetime.utcnow()})
+                return {"email": self.get_doc_by_email_address_attempt(email)["attempts"]}
+            elif check_if_ip_address_attempted is None and check_if_email_address_attempted is not None and \
+                    check_if_email_address_exists is not None:
+                self.__db.ipAttempts.create_index("createdAt", expireAfterSeconds=86400)
+                self.__db.ipAttempts.insert_one({"ip_address": ip_address, "attempts": 1,
+                                                 "createdAt": datetime.utcnow()})
+                return {"ip_address": self.get_doc_by_ip_address_attempt(ip_address)["attempts"]}
         except Exception as error:
             raise error
 
-    def reset_ip_attempts(self, ip_address):
+    def delete_ip_attempts(self, ip_address):
         try:
-            self.__db.Attempt.find_one_and_update({"ip_address": ip_address}, {"$set": {"attempts": 0}})
+            check_for_existing_ip_attempts = self.__db.ipAttempts.find_one({"ip_address": ip_address})
+            if check_for_existing_ip_attempts:
+                self.__db.ipAttempts.find_one_and_delete({"ip_address": ip_address})
+            else:
+                return None
         except Exception as error:
             raise error
 
-    def reset_email_attempts(self, email):
+    def delete_email_attempts(self, email):
         try:
-            self.__db.Attempt.find_one_and_update({"email": email}, {"$set": {"attempts": 0}})
+            check_for_existing_email_attempts = self.__db.emailAttempts.find_one({"email": email})
+            if check_for_existing_email_attempts:
+                self.__db.emailAttempts.find_one_and_delete({"email": email})
+            else:
+                return None
         except Exception as error:
             raise error
 

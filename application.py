@@ -218,6 +218,9 @@ def log_in():
                 first_name = execute_login["first_name"]
                 last_name = execute_login["last_name"]
 
+                dataLayer.delete_ip_attempts(ip_address)
+                dataLayer.delete_email_attempts(email)
+
                 response = application.response_class(
                     response=json.dumps({"_id": user_id, "role": role, "first_name": first_name,
                                          "last_name": last_name}),
@@ -243,21 +246,36 @@ def log_in():
 
             else:
                 failed_attempt = dataLayer.log_attempt(ip_address, email)
-                if failed_attempt["ip_address"] > 4 > failed_attempt["email"]:
-                    dataLayer.reset_ip_attempts(ip_address)
-                    solicit_new_pass()
-                    raise ValueError('too many failed attempts, a password reset has been sent to your email.')
-                elif failed_attempt["email"] > 4 > failed_attempt["ip_address"]:
-                    dataLayer.reset_email_attempts(email)
-                    solicit_new_pass()
-                    raise ValueError('too many failed attempts, a password reset has been sent to your email.')
-                elif failed_attempt["ip_address"] > 4 and failed_attempt["email"] > 4:
-                    dataLayer.reset_ip_attempts(ip_address)
-                    dataLayer.reset_email_attempts(email)
-                    solicit_new_pass()
-                    raise ValueError('too many failed attempts, a password reset has been sent to your email.')
-                else:
-                    raise ValueError('password is incorrect')
+                if "ip_address" in failed_attempt and "email" in failed_attempt:
+                    if failed_attempt["ip_address"] > 4 > failed_attempt["email"]:
+                        dataLayer.delete_ip_attempts(ip_address)
+                        solicit_new_pass()
+                        raise ValueError('too many failed attempts, a password reset has been sent to your email.')
+                    elif failed_attempt["email"] > 4 > failed_attempt["ip_address"]:
+                        dataLayer.delete_email_attempts(email)
+                        solicit_new_pass()
+                        raise ValueError('too many failed attempts, a password reset has been sent to your email.')
+                    elif failed_attempt["ip_address"] > 4 and failed_attempt["email"] > 4:
+                        dataLayer.delete_ip_attempts(ip_address)
+                        dataLayer.delete_email_attempts(email)
+                        solicit_new_pass()
+                        raise ValueError('too many failed attempts, a password reset has been sent to your email.')
+                    else:
+                        raise ValueError('password is incorrect')
+                elif "ip_address" in failed_attempt and "email" not in failed_attempt:
+                    if failed_attempt["ip_address"] > 4:
+                        dataLayer.delete_ip_attempts(ip_address)
+                        solicit_new_pass()
+                        raise ValueError('too many failed attempts, a password reset has been sent to your email.')
+                    else:
+                        raise ValueError('password is incorrect')
+                elif "ip_address" not in failed_attempt and "email" in failed_attempt:
+                    if failed_attempt["email"] > 4:
+                        dataLayer.delete_email_attempts(email)
+                        solicit_new_pass()
+                        raise ValueError('too many failed attempts, a password reset has been sent to your email.')
+                    else:
+                        raise ValueError('password is incorrect')
 
         except Exception as error:
             return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
@@ -350,7 +368,7 @@ def solicit_new_pass():
 
         except Exception as error:
             raise ValueError('{} data is missing in the request'.format(str(error)))
-        user_dic = dataLayer.solcit_new_password(email)
+        user_dic = dataLayer.solicit_new_password(email)
         if user_dic is None:
             raise ValueError('user does not exist in db')
 
