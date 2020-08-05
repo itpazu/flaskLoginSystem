@@ -336,10 +336,6 @@ class DataLayer:
             email_attempts = self.__db.emailAttempts.find_one_and_update({"email": email},
                                                                          {"$inc": {"attempts": 1}, "$set":{"creation": datetime.utcnow() }},
                                                                          upsert=True, return_document=ReturnDocument.AFTER)
-            print(email_attempts["attempts"])
-
-            if email_attempts["attempts"] < 2:
-                index_email = self.__db.emailAttempts.create_index("creation", expireAfterSeconds=86400)
 
             return email_attempts
 
