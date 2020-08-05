@@ -88,7 +88,9 @@ def admin_required(f):
             except Exception as error:
                 raise ValueError('{} data is missing in the request'.format(str(error)))
 
-            dataLayer.authenticate_user(user_id, token, csrf_token)
+            auth = dataLayer.authenticate_user(user_id, token, csrf_token)
+            if auth['role'] != 'admin':
+                raise Exception('user is not admin')
 
         except Exception as err:
             if str(err) == 'Signature expired':

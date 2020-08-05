@@ -95,8 +95,6 @@ class DataLayer:
         if user_id != decoded_token['_id']:
             raise Exception('ID do not match. please log in again')
 
-        if decoded_token['role'] != 'admin':
-            raise Exception('user is not admin')
 
         if csrf_token is not None:
             csrf_from_db = user_from_db['csrf_token']
