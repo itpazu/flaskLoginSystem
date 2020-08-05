@@ -3,6 +3,7 @@ from models.user import User
 from Util import decode_token, encode_token, generate_id, decode_refresh_token, encode_refresh_token
 import secrets
 from datetime import datetime
+from pymongo import ReturnDocument
 
 
 class DataLayer:
@@ -83,16 +84,15 @@ class DataLayer:
         else:
             db_password = verify_user_exists["password"]
             compare_pass = self.match_password(db_password, password)
-            role = verify_user_exists['role']
             if compare_pass:
                 user_id = str(verify_user_exists['_id'])
+                role = verify_user_exists['role']
                 generated_access_token = encode_token(user_id, db_password, role)
                 generated_refresh_token = encode_refresh_token(user_id, db_password)
                 csrf_token = secrets.token_hex()
-                self.store_token(user_id, generated_access_token, csrf_token, generated_refresh_token)
-                get_user_dict = self.get_doc_by_user_id(user_id)
+                user_dic = self.store_token(user_id, generated_access_token, csrf_token, generated_refresh_token)
 
-                return get_user_dict
+                return user_dic
 
     def authenticate_user(self, user_id, token, csrf_token=None):
 
@@ -178,10 +178,13 @@ class DataLayer:
 
     def store_token(self, user_id, access_token, csrf_token, refresh_token):
         try:
-            store_token = self.__db.Users.update({"_id": user_id}, {"$set": {"token": access_token,
+            store_token = self.__db.Users.find_one_and_update({"_id": user_id}, {"$set": {"token": access_token,
                                                                              'csrf_token': csrf_token,
-                                                                             'refresh_token': refresh_token}})
+                                                                             'refresh_token': refresh_token}}, {"password": 0, "creation_time": 0,
+                                                                                                                "last_update_time": 0 },
+                                                              return_document=ReturnDocument.AFTER)
             return store_token
+
         except Exception as error:
             raise('failed to store token' + str(error))
 
@@ -327,48 +330,19 @@ class DataLayer:
         except Exception as error:
             raise error
 
-    def log_attempt(self, ip_address, email):
+    def log_attempt(self, email):
         try:
-            check_if_ip_address_attempted = self.__db.ipAttempts.find_one({"ip_address": ip_address})
-            check_if_email_address_attempted = self.__db.emailAttempts.find_one({"email": email})
-            check_if_email_address_exists = self.get_doc_by_email(email)
-            if check_if_ip_address_attempted is not None and check_if_email_address_attempted is not None and \
-                    check_if_email_address_exists is not None:
-                self.__db.ipAttempts.find_one_and_update({"ip_address": ip_address}, {"$set":
-                                                         {"attempts": check_if_ip_address_attempted["attempts"] + 1}})
-                self.__db.emailAttempts.find_one_and_update({"email": email},
-                                                            {"$set": {"attempts": check_if_email_address_attempted[
-                                                                                      "attempts"] + 1}})
-                return {"ip_address": self.get_doc_by_ip_address_attempt(ip_address)["attempts"],
-                        "email": self.get_doc_by_email_address_attempt(email)["attempts"]}
-            elif check_if_ip_address_attempted is None and check_if_email_address_attempted is not None and \
-                    check_if_email_address_exists is not None:
-                self.__db.emailAttempts.find_one_and_update({"email": email},
-                                                            {"$set": {"attempts": check_if_email_address_attempted[
-                                                                                      "attempts"] + 1}})
-                return {"email": self.get_doc_by_email_address_attempt(email)["attempts"]}
-            elif check_if_ip_address_attempted is None and check_if_email_address_attempted is None and \
-                    check_if_email_address_exists is not None:
-                self.__db.ipAttempts.create_index("createdAt", expireAfterSeconds=86400)
-                self.__db.ipAttempts.insert_one({"ip_address": ip_address, "attempts": 1,
-                                                 "createdAt": datetime.utcnow()})
-                self.__db.emailAttempts.create_index("createdAt", expireAfterSeconds=86400)
-                self.__db.emailAttempts.insert_one({"email": email, "attempts": 1,
-                                                    "createdAt": datetime.utcnow()})
-                return {"ip_address": self.get_doc_by_ip_address_attempt(ip_address)["attempts"],
-                        "email": self.get_doc_by_email_address_attempt(email)["attempts"]}
-            elif check_if_ip_address_attempted is not None and check_if_email_address_attempted is None and \
-                    check_if_email_address_exists is not None:
-                self.__db.emailAttempts.create_index("createdAt", expireAfterSeconds=86400)
-                self.__db.emailAttempts.insert_one({"email": email, "attempts": 1,
-                                                    "createdAt": datetime.utcnow()})
-                return {"email": self.get_doc_by_email_address_attempt(email)["attempts"]}
-            elif check_if_ip_address_attempted is None and check_if_email_address_attempted is not None and \
-                    check_if_email_address_exists is not None:
-                self.__db.ipAttempts.create_index("createdAt", expireAfterSeconds=86400)
-                self.__db.ipAttempts.insert_one({"ip_address": ip_address, "attempts": 1,
-                                                 "createdAt": datetime.utcnow()})
-                return {"ip_address": self.get_doc_by_ip_address_attempt(ip_address)["attempts"]}
+
+            email_attempts = self.__db.emailAttempts.find_one_and_update({"email": email},
+                                                                         {"$inc": {"attempts": 1}, "$set":{"creation": datetime.utcnow() }},
+                                                                         upsert=True, return_document=ReturnDocument.AFTER)
+            print(email_attempts["attempts"])
+
+            if email_attempts["attempts"] < 2:
+                index_email = self.__db.emailAttempts.create_index("creation", expireAfterSeconds=86400)
+
+            return email_attempts
+
         except Exception as error:
             raise error
 
@@ -384,11 +358,7 @@ class DataLayer:
 
     def delete_email_attempts(self, email):
         try:
-            check_for_existing_email_attempts = self.__db.emailAttempts.find_one({"email": email})
-            if check_for_existing_email_attempts:
-                self.__db.emailAttempts.find_one_and_delete({"email": email})
-            else:
-                return None
+            self.__db.emailAttempts.find_one_and_delete({"email": email})
         except Exception as error:
             raise error
 
@@ -396,3 +366,14 @@ class DataLayer:
         self.__client = client
         self.__db = self.__client['keeperHome']
         self.bcrypt = bcrypt
+
+    def block_current_password(self, email):
+        try:
+            password = self.encrypt_pass(secrets.token_hex())
+            self.__db.Users.find_one_and_update({"email": email}, {"$set": {"password": password,
+                                                                    "last_update_time": User.updated_at()}})
+        except Exception as error:
+            raise error
+
+
+

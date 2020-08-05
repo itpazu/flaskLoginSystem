@@ -33,7 +33,6 @@ def encode_refresh_token(user_id, password):
             'sub': user_id,
         }
         secret_key = os.environ.get('JWT_SECRET_KEY') + user_id + str(password)
-        print(secret_key)
         token = jwt.encode(
             payload,
             secret_key,

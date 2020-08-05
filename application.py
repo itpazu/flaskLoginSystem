@@ -198,6 +198,8 @@ def log_in():
     elif request.method == "POST":
         try:
             content = request.json
+            ip_address = request.remote_addr
+
             try:
                 email = content['email']
                 password = content['password']
@@ -207,75 +209,46 @@ def log_in():
 
             execute_login = dataLayer.log_user(email, password)
 
-            ip_address = request.remote_addr
-
             if execute_login:
-                csrf_token = execute_login["csrf_token"]
-                user_id = execute_login["_id"]
-                token = execute_login["token"]
-                refresh_token = execute_login["refresh_token"]
-                role = execute_login["role"]
-                first_name = execute_login["first_name"]
-                last_name = execute_login["last_name"]
-
-                dataLayer.delete_ip_attempts(ip_address)
+                # dataLayer.delete_ip_attempts(ip_address)
                 dataLayer.delete_email_attempts(email)
-
+                keys = ['_id', 'role', "first_name", "last_name" ]
+                new_dic = {key: execute_login[key] for key in keys}
                 response = application.response_class(
-                    response=json.dumps({"_id": user_id, "role": role, "first_name": first_name,
-                                         "last_name": last_name}),
+                    response=json.dumps(new_dic),
                     status=200,
                     mimetype='application/json',
                     headers={'Access-Control-Allow-Origin': "http://localhost:3000",
                              'Access-Control-Allow-Credentials': "true",
                              'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
                              'Access-Control-Expose-Headers': ["Authorization"],
-                             "Authorization": csrf_token,
+                             "Authorization": execute_login["csrf_token"],
                              }
                 )
 
-                response.set_cookie('token', value=token, httponly=True,
+                response.set_cookie('token', value=execute_login["token"], httponly=True,
                                     domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
                                     path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
                                     samesite='none')
-                response.set_cookie('refresh_token', value=refresh_token, httponly=True,
+                response.set_cookie('refresh_token', value=execute_login["refresh_token"], httponly=True,
                                     domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
                                     path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
                                     samesite='none')
                 return response
 
             else:
-                failed_attempt = dataLayer.log_attempt(ip_address, email)
-                if "ip_address" in failed_attempt and "email" in failed_attempt:
-                    if failed_attempt["ip_address"] > 4 > failed_attempt["email"]:
-                        dataLayer.delete_ip_attempts(ip_address)
-                        solicit_new_pass()
-                        raise ValueError('too many failed attempts, a password reset has been sent to your email.')
-                    elif failed_attempt["email"] > 4 > failed_attempt["ip_address"]:
-                        dataLayer.delete_email_attempts(email)
-                        solicit_new_pass()
-                        raise ValueError('too many failed attempts, a password reset has been sent to your email.')
-                    elif failed_attempt["ip_address"] > 4 and failed_attempt["email"] > 4:
-                        dataLayer.delete_ip_attempts(ip_address)
-                        dataLayer.delete_email_attempts(email)
-                        solicit_new_pass()
-                        raise ValueError('too many failed attempts, a password reset has been sent to your email.')
-                    else:
-                        raise ValueError('password is incorrect')
-                elif "ip_address" in failed_attempt and "email" not in failed_attempt:
-                    if failed_attempt["ip_address"] > 4:
-                        dataLayer.delete_ip_attempts(ip_address)
-                        solicit_new_pass()
-                        raise ValueError('too many failed attempts, a password reset has been sent to your email.')
-                    else:
-                        raise ValueError('password is incorrect')
-                elif "ip_address" not in failed_attempt and "email" in failed_attempt:
-                    if failed_attempt["email"] > 4:
-                        dataLayer.delete_email_attempts(email)
-                        solicit_new_pass()
-                        raise ValueError('too many failed attempts, a password reset has been sent to your email.')
-                    else:
-                        raise ValueError('password is incorrect')
+                failed_email = dataLayer.log_attempt(email)
+                if failed_email["attempts"] == 5:
+                    dataLayer.block_current_password(email)
+                    solicit_new_pass()
+                    raise ValueError('too many failed attempts, a password reset has been sent to your email.')
+                elif failed_email["attempts"] >= 10:
+                    if failed_email["attempts"] % 5:
+                        dataLayer.block_current_password(email)
+                        raise Exception("user is blocked. Turn to your admin")
+                    raise Exception("user is blocked")
+                else:
+                    raise ValueError('password is incorrect')
 
         except Exception as error:
             return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
