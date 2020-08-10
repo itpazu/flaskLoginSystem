@@ -52,7 +52,6 @@ def token_required(f):
 
         except Exception as err:
             if str(err) == 'Signature expired':
-
                 response = application.response_class(
                     response=json.dumps("signature expired"),
                     status=403,
@@ -88,11 +87,12 @@ def admin_required(f):
             except Exception as error:
                 raise ValueError('{} data is missing in the request'.format(str(error)))
 
-            dataLayer.authenticate_user(user_id, token, csrf_token)
+            auth = dataLayer.authenticate_user(user_id, token, csrf_token)
+            if auth['role'] != 'admin':
+                raise Exception('user is not admin')
 
         except Exception as err:
             if str(err) == 'Signature expired':
-
                 response = application.response_class(
                     response=json.dumps("authentication failed:" + str(err)),
                     status=403,
@@ -107,6 +107,7 @@ def admin_required(f):
             )
             return response
         return f(*args, **kwargs)
+
     return decorated
 
 
@@ -180,11 +181,10 @@ def refresh_token(user_dic):
         return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
 
 
-@application.route('/test', methods=['POST', 'GET'])
+@application.route('/test', methods=['POST', 'GET'])  # for development- testing tokens
 @token_required
 # @admin_required
 def test_route():
-
     return 'HELLO KEEPER HOME', 200, {'Access-Control-Allow-Origin': "http://localhost:3000",
                                       'Access-Control-Allow-Credentials': "true",
                                       'Access-Control-Allow-Headers': ["Content-Type", "Authorization"]
@@ -212,7 +212,7 @@ def log_in():
             if execute_login:
                 # dataLayer.delete_ip_attempts(ip_address)
                 dataLayer.delete_email_attempts(email)
-                keys = ['_id', 'role', "first_name", "last_name" ]
+                keys = ["_id", "role", "first_name", "last_name"]
                 new_dic = {key: execute_login[key] for key in keys}
                 response = application.response_class(
                     response=json.dumps(new_dic),
@@ -242,11 +242,13 @@ def log_in():
                     dataLayer.block_current_password(email)
                     solicit_new_pass()
                     raise ValueError('too many failed attempts, a password reset has been sent to your email.')
-                elif failed_email["attempts"] >= 10:
-                    if failed_email["attempts"] % 5:
-                        dataLayer.block_current_password(email)
-                        raise Exception("user is blocked. Turn to your admin")
+                elif failed_email["attempts"] == 10:
+                    dataLayer.block_current_password(email, True)
+                    notify_admins(email)
                     raise Exception("user is blocked")
+                elif failed_email["attempts"] > 10 and failed_email["attempts"] % 5:
+                    dataLayer.block_current_password(email)
+                    raise Exception("user is blocked. Turn to your admin")
                 else:
                     raise ValueError('password is incorrect')
 
@@ -355,6 +357,19 @@ def solicit_new_pass():
         return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
 
 
+@application.route('/unblock_user', methods=["DELETE", "GET", "UPDATE"])
+@admin_required
+def unblock_user():
+    try:
+        email = request.json["email"]
+        dataLayer.delete_email_attempts(email)
+        dataLayer.delete_block_field(email)
+        return solicit_new_pass()
+    except Exception as error:
+        return json.dumps('unblocking user failed: {}'.format(error), default=str), 401, {
+            "Content-Type": "application/json"}
+
+
 @application.route('/delete_user', methods=["DELETE"])
 @admin_required
 def delete_user():
@@ -382,31 +397,10 @@ def demote_admin(_id):
     return resp
 
 
-@application.route('/change_first_name/<string:_id>', methods=["POST"])
-def change_first_name(_id):
-    changed_name = dataLayer.change_first_name(_id)
-    resp = json.dumps(changed_name, default=str), 200, {"Content-Type": "application/json"}
-    return resp
-
-
-@application.route('/change_last_name/<string:_id>', methods=["POST"])
-def change_last_name(_id):
-    changed_name = dataLayer.change_last_name(_id)
-    resp = json.dumps(changed_name, default=str), 200, {"Content-Type": "application/json"}
-    return resp
-
-
 @application.route('/change_email/<string:_id>', methods=["POST"])
 def change_email(_id):
     changed_email = dataLayer.change_email(_id)
     resp = json.dumps(changed_email, default=str), 200, {"Content-Type": "application/json"}
-    return resp
-
-
-@application.route('/change_id/<string:_id>', methods=["POST"])
-def change_id(_id):
-    changed_id = dataLayer.change_id(_id)
-    resp = json.dumps(changed_id, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
 
@@ -432,15 +426,18 @@ def change_password():
         return response
 
 
-def _build_cors_preflight_response():
-    response = application.response_class(
-        status=200,
-        mimetype='application/json',
-        headers={'Access-Control-Allow-Origin': "http://localhost:3000", 'Access-Control-Allow-Credentials': "true",
-                 'Access-Control-Allow-Headers': ["Content-Type", "token"]}
-
-    )
-    return response
+def notify_admins(email):
+    try:
+        admin_emails = list(dataLayer.get_admins())
+        recipients = [admin.get("email") for admin in admin_emails]
+        msg = Message('Suspicious login attempts to account {}'.format(email), recipients=recipients)
+        msg.body = render_template('notify_admin.txt', email_address=email)
+        msg.html = render_template('notify_admin.html',
+                                   email_address=email)
+        mail.send(msg)
+        return 'email to admins has been successfully sent'
+    except Exception as error:
+        return 'failed to send email: {}'.format(str(error))
 
 
 def send_password_by_mail(email_address, user_id, token):
@@ -449,7 +446,7 @@ def send_password_by_mail(email_address, user_id, token):
 
         msg = Message('Reset Password', recipients=[email_address])
         msg.body = render_template('reset_password.txt', url=url)
-        msg.html = render_template('reset_pass.html', title='reset password',
+        msg.html = render_template('reset_pass.html',
                                    url=url)
         mail.send(msg)
     except Exception as error:
@@ -466,6 +463,17 @@ def send_password_by_mail(email_address, user_id, token):
                  }
     )
     return resp
+
+
+def _build_cors_preflight_response():
+    response = application.response_class(
+        status=200,
+        mimetype='application/json',
+        headers={'Access-Control-Allow-Origin': "http://localhost:3000", 'Access-Control-Allow-Credentials': "true",
+                 'Access-Control-Allow-Headers': ["Content-Type", "token"]}
+
+    )
+    return response
 
 
 if __name__ == "__main__":

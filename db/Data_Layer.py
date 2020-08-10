@@ -25,6 +25,13 @@ class DataLayer:
         except Exception as error:
             raise Exception(str(error))
 
+    def get_admins(self):
+        try:
+            admins = self.__db.Users.find({"role": "admin"}, {"email": 1, "_id": 0})
+            return admins
+        except Exception as error:
+            raise Exception("failed to get admins: {}".format(str(error)))
+
     def get_doc_by_ip_address_attempt(self, ip_address):
         try:
             user_dict = self.__db.ipAttempts.find_one({"ip_address": ip_address})
@@ -111,8 +118,6 @@ class DataLayer:
         if user_id != decoded_token['_id']:
             raise Exception('ID do not match. please log in again')
 
-        if decoded_token['role'] != 'admin':
-            raise Exception('user is not admin')
 
         if csrf_token is not None:
             csrf_from_db = user_from_db['csrf_token']
@@ -152,6 +157,11 @@ class DataLayer:
         user_dic = self.get_doc_by_email(email)
         if user_dic is None:
             return None
+        attempts = self.get_attempts(email)
+
+        if attempts is not None and attempts["attempts"] >= 10:
+            raise Exception('user is blocked. Turn to an admin')
+
         password = user_dic['password']  # db
         user_id = user_dic['_id']
         role = user_dic['role']
@@ -246,31 +256,6 @@ class DataLayer:
         except ValueError as error:
             raise error
 
-    def change_first_name(self, _id):
-        first_name = request.get_json()['first_name']
-        try:
-            if self.__db.Users.find_one({"_id": _id}):
-                self.__db.Users.find_one_and_update({"_id": _id}, {"$set": {"first_name": first_name,
-                                                                            "last_update_time": User.updated_at()}})
-                changed_name = {'status': 'The first name has been changed!'}
-                return changed_name
-            else:
-                raise ValueError('The user does not exist!')
-        except ValueError as error:
-            raise error
-
-    def change_last_name(self, _id):
-        last_name = request.get_json()['last_name']
-        try:
-            if self.__db.Users.find_one({"_id": _id}):
-                self.__db.Users.find_one_and_update({"_id": _id}, {"$set": {"first_name": last_name,
-                                                                            "last_update_time": User.updated_at()}})
-                changed_name = {'status': 'The last name has been changed!'}
-                return changed_name
-            else:
-                raise ValueError('The user does not exist!')
-        except ValueError as error:
-            raise error
 
     def change_email(self, _id):
         email = request.get_json()['email']
@@ -288,22 +273,6 @@ class DataLayer:
         except ValueError as error:
             raise error
 
-    def change_id(self, email):
-        _id = request.get_json()['_id']
-        try:
-            if self.__db.Users.find_one({"email": email}):
-                if self.__db.Users.find({"$not": {"_id": _id}}):
-                    self.__db.Users.find_one_and_update({"email": email}, {"$set": {"_id": _id,
-                                                                                    "last_update_time":
-                                                                                        User.updated_at()}})
-                    changed_username = {'status': 'The user id has been changed!'}
-                    return changed_username
-                else:
-                    raise ValueError('The user id is already in use!')
-            else:
-                raise ValueError('The user does not exist!')
-        except ValueError as error:
-            raise error
 
     def change_password(self, content):
         try:
@@ -336,19 +305,22 @@ class DataLayer:
             email_attempts = self.__db.emailAttempts.find_one_and_update({"email": email},
                                                                          {"$inc": {"attempts": 1}, "$set":{"creation": datetime.utcnow() }},
                                                                          upsert=True, return_document=ReturnDocument.AFTER)
-
             return email_attempts
 
+
+
+        except Exception as error:
+            raise error
+
+    def get_attempts(self, email):
+        try:
+            return self.__db.emailAttempts.find_one({"email": email}, {"attempts": 1, "_id": 0})
         except Exception as error:
             raise error
 
     def delete_ip_attempts(self, ip_address):
         try:
-            check_for_existing_ip_attempts = self.__db.ipAttempts.find_one({"ip_address": ip_address})
-            if check_for_existing_ip_attempts:
-                self.__db.ipAttempts.find_one_and_delete({"ip_address": ip_address})
-            else:
-                return None
+            self.__db.ipAttempts.find_one_and_delete({"ip_address": ip_address})
         except Exception as error:
             raise error
 
@@ -358,18 +330,33 @@ class DataLayer:
         except Exception as error:
             raise error
 
+    def delete_block_field(self, email):
+        try:
+            self.__db.Users.update({"email": email}, {"$unset": {"blocked": 1}})
+
+        except Exception as error:
+            raise error
+
+    def block_current_password(self, email, block=None):
+        try:
+            if block is None:
+                password = self.encrypt_pass(secrets.token_hex())
+                self.__db.Users.find_one_and_update({"email": email}, {"$set": {"password": password,
+                                                                                "last_update_time": User.updated_at()}})
+
+
+            password = self.encrypt_pass(secrets.token_hex())
+            self.__db.Users.find_one_and_update({"email": email}, {"$set": {"password": password,
+                                                                    "last_update_time": User.updated_at(), "blocked": True}},
+                                                upsert=True)
+        except Exception as error:
+            raise error
+
+
     def __init__(self, bcrypt, client):
         self.__client = client
         self.__db = self.__client['keeperHome']
         self.bcrypt = bcrypt
-
-    def block_current_password(self, email):
-        try:
-            password = self.encrypt_pass(secrets.token_hex())
-            self.__db.Users.find_one_and_update({"email": email}, {"$set": {"password": password,
-                                                                    "last_update_time": User.updated_at()}})
-        except Exception as error:
-            raise error
 
 
 

@@ -1,0 +1,8 @@
+
+Dear Admin,
+    The User with the following email address {{ email_address }} exceeded the permitted amount of unsuccessful login
+    attempts. The account has been blocked and can only be activated by an admin.
+    Any admin with the necessary permissions can unblock the account at any time from the admin dashboard.
+
+Sincerely,
+KeepersHome.
