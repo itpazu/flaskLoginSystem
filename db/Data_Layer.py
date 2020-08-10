@@ -1,9 +1,9 @@
 from flask import request
 from models.user import User
 from Util import decode_token, encode_token, generate_id, decode_refresh_token, encode_refresh_token
-
-import jwt
 import secrets
+from datetime import datetime
+from pymongo import ReturnDocument
 
 
 class DataLayer:
@@ -18,6 +18,33 @@ class DataLayer:
     def get_doc_by_email(self, email):
         try:
             user_dict = self.__db.Users.find_one({"email": email})
+            if user_dict:
+                return user_dict
+            else:
+                return None
+        except Exception as error:
+            raise Exception(str(error))
+
+    def get_admins(self):
+        try:
+            admins = self.__db.Users.find({"role": "admin"}, {"email": 1, "_id": 0})
+            return admins
+        except Exception as error:
+            raise Exception("failed to get admins: {}".format(str(error)))
+
+    def get_doc_by_ip_address_attempt(self, ip_address):
+        try:
+            user_dict = self.__db.ipAttempts.find_one({"ip_address": ip_address})
+            if user_dict:
+                return user_dict
+            else:
+                return None
+        except Exception as error:
+            raise Exception(str(error))
+
+    def get_doc_by_email_address_attempt(self, email):
+        try:
+            user_dict = self.__db.emailAttempts.find_one({"email": email})
             if user_dict:
                 return user_dict
             else:
@@ -64,18 +91,15 @@ class DataLayer:
         else:
             db_password = verify_user_exists["password"]
             compare_pass = self.match_password(db_password, password)
-            role = verify_user_exists['role']
             if compare_pass:
                 user_id = str(verify_user_exists['_id'])
+                role = verify_user_exists['role']
                 generated_access_token = encode_token(user_id, db_password, role)
                 generated_refresh_token = encode_refresh_token(user_id, db_password)
                 csrf_token = secrets.token_hex()
-                self.store_token(user_id, generated_access_token, csrf_token, generated_refresh_token)
-                get_user_dict = self.get_doc_by_user_id(user_id)
+                user_dic = self.store_token(user_id, generated_access_token, csrf_token, generated_refresh_token)
 
-                return get_user_dict
-
-            raise ValueError('password is incorrect')
+                return user_dic
 
     def authenticate_user(self, user_id, token, csrf_token=None):
 
@@ -91,7 +115,6 @@ class DataLayer:
         except Exception as error:
             raise Exception(error)
 
-
         if user_id != decoded_token['_id']:
             raise Exception('ID do not match. please log in again')
 
@@ -101,9 +124,7 @@ class DataLayer:
             if str(csrf_token) != str(csrf_from_db):
                 raise Exception('csrf token is invalid!')
 
-
         return decoded_token
-
 
     def authenticate_refresh_token(self, user_id, refresh_token):
         try:
@@ -115,7 +136,6 @@ class DataLayer:
             return user_dic
         except Exception as error:
             raise Exception(str(error))
-
 
     def refresh_token(self, user_dic):
         try:
@@ -133,12 +153,15 @@ class DataLayer:
         except Exception as error:
             raise Exception(str(error))
 
-
-
-    def solcit_new_password(self, email):
+    def solicit_new_password(self, email):
         user_dic = self.get_doc_by_email(email)
         if user_dic is None:
             return None
+        attempts = self.get_attempts(email)
+
+        if attempts is not None and attempts["attempts"] >= 10:
+            raise Exception('user is blocked. Turn to an admin')
+
         password = user_dic['password']  # db
         user_id = user_dic['_id']
         role = user_dic['role']
@@ -148,7 +171,7 @@ class DataLayer:
         except Exception as error:
             raise error
         try:
-            self.store_reset_token(user_id, reset_token) #store new pass
+            self.store_reset_token(user_id, reset_token)  # store new pass
         except Exception as error:
             raise ValueError('failed to update db')
         new_user_dic = self.get_doc_by_email(email)
@@ -165,10 +188,13 @@ class DataLayer:
 
     def store_token(self, user_id, access_token, csrf_token, refresh_token):
         try:
-            store_token = self.__db.Users.update({"_id": user_id}, {"$set": {"token": access_token,
+            store_token = self.__db.Users.find_one_and_update({"_id": user_id}, {"$set": {"token": access_token,
                                                                              'csrf_token': csrf_token,
-                                                                             'refresh_token': refresh_token }})
+                                                                             'refresh_token': refresh_token}}, {"password": 0, "creation_time": 0,
+                                                                                                                "last_update_time": 0 },
+                                                              return_document=ReturnDocument.AFTER)
             return store_token
+
         except Exception as error:
             raise('failed to store token' + str(error))
 
@@ -230,31 +256,6 @@ class DataLayer:
         except ValueError as error:
             raise error
 
-    def change_first_name(self, _id):
-        first_name = request.get_json()['first_name']
-        try:
-            if self.__db.Users.find_one({"_id": _id}):
-                self.__db.Users.find_one_and_update({"_id": _id}, {"$set": {"first_name": first_name,
-                                                                            "last_update_time": User.updated_at()}})
-                changed_name = {'status': 'The first name has been changed!'}
-                return changed_name
-            else:
-                raise ValueError('The user does not exist!')
-        except ValueError as error:
-            raise error
-
-    def change_last_name(self, _id):
-        last_name = request.get_json()['last_name']
-        try:
-            if self.__db.Users.find_one({"_id": _id}):
-                self.__db.Users.find_one_and_update({"_id": _id}, {"$set": {"first_name": last_name,
-                                                                            "last_update_time": User.updated_at()}})
-                changed_name = {'status': 'The last name has been changed!'}
-                return changed_name
-            else:
-                raise ValueError('The user does not exist!')
-        except ValueError as error:
-            raise error
 
     def change_email(self, _id):
         email = request.get_json()['email']
@@ -272,22 +273,6 @@ class DataLayer:
         except ValueError as error:
             raise error
 
-    def change_id(self, email):
-        _id = request.get_json()['_id']
-        try:
-            if self.__db.Users.find_one({"email": email}):
-                if self.__db.Users.find({"$not": {"_id": _id}}):
-                    self.__db.Users.find_one_and_update({"email": email}, {"$set": {"_id": _id,
-                                                                                    "last_update_time":
-                                                                                        User.updated_at()}})
-                    changed_username = {'status': 'The user id has been changed!'}
-                    return changed_username
-                else:
-                    raise ValueError('The user id is already in use!')
-            else:
-                raise ValueError('The user does not exist!')
-        except ValueError as error:
-            raise error
 
     def change_password(self, content):
         try:
@@ -305,8 +290,8 @@ class DataLayer:
 
         try:
             changed_password = self.__db.Users.find_one_and_update({"_id": user_id}, {"$set": {"password": hashedpass,
-                                                                                "last_update_time":
-                                                                                    User.updated_at()}})
+                                                                                      "last_update_time":
+                                                                                               User.updated_at()}})
             if changed_password is None:
                 raise ValueError('User might not exists in db')
             return changed_password['_id']
@@ -314,7 +299,64 @@ class DataLayer:
         except Exception as error:
             raise error
 
+    def log_attempt(self, email):
+        try:
+
+            email_attempts = self.__db.emailAttempts.find_one_and_update({"email": email},
+                                                                         {"$inc": {"attempts": 1}, "$set":{"creation": datetime.utcnow() }},
+                                                                         upsert=True, return_document=ReturnDocument.AFTER)
+            return email_attempts
+
+
+
+        except Exception as error:
+            raise error
+
+    def get_attempts(self, email):
+        try:
+            return self.__db.emailAttempts.find_one({"email": email}, {"attempts": 1, "_id": 0})
+        except Exception as error:
+            raise error
+
+    def delete_ip_attempts(self, ip_address):
+        try:
+            self.__db.ipAttempts.find_one_and_delete({"ip_address": ip_address})
+        except Exception as error:
+            raise error
+
+    def delete_email_attempts(self, email):
+        try:
+            self.__db.emailAttempts.find_one_and_delete({"email": email})
+        except Exception as error:
+            raise error
+
+    def delete_block_field(self, email):
+        try:
+            self.__db.Users.update({"email": email}, {"$unset": {"blocked": 1}})
+
+        except Exception as error:
+            raise error
+
+    def block_current_password(self, email, block=None):
+        try:
+            if block is None:
+                password = self.encrypt_pass(secrets.token_hex())
+                self.__db.Users.find_one_and_update({"email": email}, {"$set": {"password": password,
+                                                                                "last_update_time": User.updated_at()}})
+
+
+            password = self.encrypt_pass(secrets.token_hex())
+            self.__db.Users.find_one_and_update({"email": email}, {"$set": {"password": password,
+                                                                    "last_update_time": User.updated_at(), "blocked": True}},
+                                                upsert=True)
+        except Exception as error:
+            raise error
+
+
     def __init__(self, bcrypt, client):
         self.__client = client
         self.__db = self.__client['keeperHome']
         self.bcrypt = bcrypt
+
+
+

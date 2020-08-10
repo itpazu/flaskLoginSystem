@@ -36,7 +36,7 @@ def token_required(f):
     def decorated(*args, **kwargs):
         try:
             content = request.json
-            cookie = request.cookies          ## commented out for development only
+            cookie = request.cookies  # commented out for development only
 
             try:
                 csrf_token = request.headers.get('Authorization')
@@ -52,7 +52,6 @@ def token_required(f):
 
         except Exception as err:
             if str(err) == 'Signature expired':
-
                 response = application.response_class(
                     response=json.dumps("signature expired"),
                     status=403,
@@ -94,12 +93,10 @@ def admin_required(f):
 
         except Exception as err:
             if str(err) == 'Signature expired':
-
                 response = application.response_class(
                     response=json.dumps("authentication failed:" + str(err)),
                     status=403,
                     mimetype='application/json',
-
                 )
                 return response
 
@@ -107,18 +104,19 @@ def admin_required(f):
                 response=json.dumps("authentication failed:" + str(err)),
                 status=401,
                 mimetype='application/json',
-
             )
             return response
         return f(*args, **kwargs)
+
     return decorated
+
 
 def refresh_token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         try:
             content = request.json
-            cookie = request.cookies          ## commented out for development only
+            cookie = request.cookies  # commented out for development only
 
             try:
                 # ref_token = request.headers.get('refresh_token')  ##for dev only
@@ -129,13 +127,11 @@ def refresh_token_required(f):
 
             authenticated_user = dataLayer.authenticate_refresh_token(user_id, ref_token)
 
-
         except Exception as err:
             response = application.response_class(
                 response=json.dumps("authentication failed:" + str(err)),
                 status=401,
                 mimetype='application/json',
-
             )
 
             return response
@@ -185,14 +181,13 @@ def refresh_token(user_dic):
         return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
 
 
-@application.route('/test', methods=['POST', 'GET'])
+@application.route('/test', methods=['POST', 'GET'])  # for development- testing tokens
 @token_required
 # @admin_required
 def test_route():
-
     return 'HELLO KEEPER HOME', 200, {'Access-Control-Allow-Origin': "http://localhost:3000",
-                                                                            'Access-Control-Allow-Credentials': "true",
-                                                                            'Access-Control-Allow-Headers': ["Content-Type", "Authorization"]
+                                      'Access-Control-Allow-Credentials': "true",
+                                      'Access-Control-Allow-Headers': ["Content-Type", "Authorization"]
                                       }
 
 
@@ -203,6 +198,8 @@ def log_in():
     elif request.method == "POST":
         try:
             content = request.json
+            ip_address = request.remote_addr
+
             try:
                 email = content['email']
                 password = content['password']
@@ -211,40 +208,49 @@ def log_in():
                 raise ValueError('{}, data is missing in the request'.format(str(error)))
 
             execute_login = dataLayer.log_user(email, password)
-            csrf_token = execute_login["csrf_token"]
-            user_id = execute_login["_id"]
-            token = execute_login["token"]
-            refresh_token = execute_login["refresh_token"]
-            role = execute_login["role"]
-            first_name = execute_login ["first_name"]
-            last_name = execute_login ["last_name"]
 
-            response = application.response_class(
-                response=json.dumps({"_id": user_id, "role": role, "first_name": first_name,
-                                     "last_name": last_name}),
-                status=200,
-                mimetype='application/json',
-                headers={'Access-Control-Allow-Origin': "http://localhost:3000",
-                         'Access-Control-Allow-Credentials': "true",
-                         'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
-                         'Access-Control-Expose-Headers': ["Authorization"],
-                         "Authorization":  csrf_token,
+            if execute_login:
+                # dataLayer.delete_ip_attempts(ip_address)
+                dataLayer.delete_email_attempts(email)
+                keys = ["_id", "role", "first_name", "last_name"]
+                new_dic = {key: execute_login[key] for key in keys}
+                response = application.response_class(
+                    response=json.dumps(new_dic),
+                    status=200,
+                    mimetype='application/json',
+                    headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+                             'Access-Control-Allow-Credentials': "true",
+                             'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
+                             'Access-Control-Expose-Headers': ["Authorization"],
+                             "Authorization": execute_login["csrf_token"],
+                             }
+                )
 
-                         }
+                response.set_cookie('token', value=execute_login["token"], httponly=True,
+                                    domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
+                                    path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
+                                    samesite='none')
+                response.set_cookie('refresh_token', value=execute_login["refresh_token"], httponly=True,
+                                    domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
+                                    path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
+                                    samesite='none')
+                return response
 
-            )
-
-            response.set_cookie('token', value=token, httponly=True,
-                                domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
-                                path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
-                                samesite='none')
-            response.set_cookie('refresh_token', value=refresh_token, httponly=True,
-                                domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
-                                path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
-                                samesite='none')
-
-
-            return response
+            else:
+                failed_email = dataLayer.log_attempt(email)
+                if failed_email["attempts"] == 5:
+                    dataLayer.block_current_password(email)
+                    solicit_new_pass()
+                    raise ValueError('too many failed attempts, a password reset has been sent to your email.')
+                elif failed_email["attempts"] == 10:
+                    dataLayer.block_current_password(email, True)
+                    notify_admins(email)
+                    raise Exception("user is blocked")
+                elif failed_email["attempts"] > 10 and failed_email["attempts"] % 5:
+                    dataLayer.block_current_password(email)
+                    raise Exception("user is blocked. Turn to your admin")
+                else:
+                    raise ValueError('password is incorrect')
 
         except Exception as error:
             return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
@@ -316,7 +322,6 @@ def all_users():
 @admin_required
 def add_user():
     try:
-
         content = request.json
         added_user = dataLayer.add_user(content)
         email_address = added_user['email']
@@ -325,6 +330,7 @@ def add_user():
         sent_mail = send_password_by_mail(email_address, user_id, token)
 
         return sent_mail
+
     except Exception as error:
         return json.dumps(error, default=str), 400, {"Content-Type": "application/json"}
 
@@ -337,7 +343,7 @@ def solicit_new_pass():
 
         except Exception as error:
             raise ValueError('{} data is missing in the request'.format(str(error)))
-        user_dic = dataLayer.solcit_new_password(email)
+        user_dic = dataLayer.solicit_new_password(email)
         if user_dic is None:
             raise ValueError('user does not exist in db')
 
@@ -349,6 +355,19 @@ def solicit_new_pass():
 
     except Exception as error:
         return json.dumps(error, default=str), 401, {"Content-Type": "application/json"}
+
+
+@application.route('/unblock_user', methods=["DELETE", "GET", "UPDATE"])
+@admin_required
+def unblock_user():
+    try:
+        email = request.json["email"]
+        dataLayer.delete_email_attempts(email)
+        dataLayer.delete_block_field(email)
+        return solicit_new_pass()
+    except Exception as error:
+        return json.dumps('unblocking user failed: {}'.format(error), default=str), 401, {
+            "Content-Type": "application/json"}
 
 
 @application.route('/delete_user', methods=["DELETE"])
@@ -378,31 +397,10 @@ def demote_admin(_id):
     return resp
 
 
-@application.route('/change_first_name/<string:_id>', methods=["POST"])
-def change_first_name(_id):
-    changed_name = dataLayer.change_first_name(_id)
-    resp = json.dumps(changed_name, default=str), 200, {"Content-Type": "application/json"}
-    return resp
-
-
-@application.route('/change_last_name/<string:_id>', methods=["POST"])
-def change_last_name(_id):
-    changed_name = dataLayer.change_last_name(_id)
-    resp = json.dumps(changed_name, default=str), 200, {"Content-Type": "application/json"}
-    return resp
-
-
 @application.route('/change_email/<string:_id>', methods=["POST"])
 def change_email(_id):
     changed_email = dataLayer.change_email(_id)
     resp = json.dumps(changed_email, default=str), 200, {"Content-Type": "application/json"}
-    return resp
-
-
-@application.route('/change_id/<string:_id>', methods=["POST"])
-def change_id(_id):
-    changed_id = dataLayer.change_id(_id)
-    resp = json.dumps(changed_id, default=str), 200, {"Content-Type": "application/json"}
     return resp
 
 
@@ -412,35 +410,34 @@ def change_password():
         content = request.json
         changed_password = dataLayer.change_password(content)
 
-        response = application.response_class(response=json.dumps("Password has been changed successfully:" + changed_password),
+        response = application.response_class(response=json.dumps("Password has been changed successfully:" +
+                                                                  changed_password),
                                               status=200,
                                               mimetype='application/json',
-                                              headers= {'Access-Control-Allow-Origin': "http://localhost:3000",
-                                          'Access-Control-Allow-Credentials': "true",
-                                          'Access-Control-Allow-Headers': ["Content-Type"]})
-
+                                              headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+                                                       'Access-Control-Allow-Credentials': "true",
+                                                       'Access-Control-Allow-Headers': ["Content-Type"]}
+                                              )
         return response
-
     except Exception as err:
-
         response = application.response_class(response=json.dumps("update failed:" + str(err)),
                                               status=401,
                                               mimetype='application/json')
-
         return response
 
 
-def _build_cors_preflight_response():
-    response = application.response_class(
-
-        status=200,
-        mimetype='application/json',
-        headers={'Access-Control-Allow-Origin': "http://localhost:3000", 'Access-Control-Allow-Credentials': "true",
-                 'Access-Control-Allow-Headers': ["Content-Type", "token"]}
-
-    )
-
-    return response
+def notify_admins(email):
+    try:
+        admin_emails = list(dataLayer.get_admins())
+        recipients = [admin.get("email") for admin in admin_emails]
+        msg = Message('Suspicious login attempts to account {}'.format(email), recipients=recipients)
+        msg.body = render_template('notify_admin.txt', email_address=email)
+        msg.html = render_template('notify_admin.html',
+                                   email_address=email)
+        mail.send(msg)
+        return 'email to admins has been successfully sent'
+    except Exception as error:
+        return 'failed to send email: {}'.format(str(error))
 
 
 def send_password_by_mail(email_address, user_id, token):
@@ -449,7 +446,7 @@ def send_password_by_mail(email_address, user_id, token):
 
         msg = Message('Reset Password', recipients=[email_address])
         msg.body = render_template('reset_password.txt', url=url)
-        msg.html = render_template('reset_pass.html', title='reset password',
+        msg.html = render_template('reset_pass.html',
                                    url=url)
         mail.send(msg)
     except Exception as error:
@@ -464,9 +461,19 @@ def send_password_by_mail(email_address, user_id, token):
                  'Access-Control-Allow-Credentials': "true",
                  'Access-Control-Allow-Headers': "Content-Type",
                  }
-
     )
     return resp
+
+
+def _build_cors_preflight_response():
+    response = application.response_class(
+        status=200,
+        mimetype='application/json',
+        headers={'Access-Control-Allow-Origin': "http://localhost:3000", 'Access-Control-Allow-Credentials': "true",
+                 'Access-Control-Allow-Headers': ["Content-Type", "token"]}
+
+    )
+    return response
 
 
 if __name__ == "__main__":
