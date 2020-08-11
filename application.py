@@ -198,7 +198,7 @@ def log_in():
     elif request.method == "POST":
         try:
             content = request.json
-            ip_address = request.remote_addr
+            # ip_address = request.remote_addr
 
             try:
                 email = content['email']
@@ -212,7 +212,7 @@ def log_in():
             if execute_login:
                 # dataLayer.delete_ip_attempts(ip_address)
                 dataLayer.delete_email_attempts(email)
-                keys = ["_id", "role", "first_name", "last_name"]
+                keys = ["_id", "role", "first_name", "last_name", "email"]  # added email to keys list
                 new_dic = {key: execute_login[key] for key in keys}
                 response = application.response_class(
                     response=json.dumps(new_dic),
