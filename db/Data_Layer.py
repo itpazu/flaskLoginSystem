@@ -227,6 +227,21 @@ class DataLayer:
         except ValueError as error:
             raise error
 
+    # added the 2 functions below for adding and deleting profile photos
+    def add_photo(self, _id, photo):
+        try:
+            add_photo = self.__db.Users.update({"_id": _id}, {"$set": {"photo": photo}})
+            return add_photo
+        except Exception as error:
+            raise('failed to add photo' + str(error))
+
+    def delete_photo(self, _id):
+        try:
+            delete_photo = self.__db.Users.update({"_id": _id}, {"$set": {"photo": ""}})
+            return delete_photo
+        except Exception as error:
+            raise('failed to delete photo' + str(error))
+
     def make_admin(self, _id):
         try:
             if self.__db.Users.find_one({"_id": _id}):
