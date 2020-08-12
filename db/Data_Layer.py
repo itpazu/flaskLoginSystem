@@ -322,9 +322,9 @@ class DataLayer:
         last_name = content['last_name']
         email = content['email']
         try:
-            edit_user = self.__db.Users.find_one_and_update({"_id": _id}, {"set": {"first_name": first_name,
-                                                                                   "last_name": last_name,
-                                                                                   "email": email}})
+            edit_user = self.__db.Users.find_one_and_update({"_id": _id}, {"$set": {"first_name": first_name,
+                                                                                    "last_name": last_name,
+                                                                                    "email": email}})
             return edit_user
         except Exception as error:
             raise error
