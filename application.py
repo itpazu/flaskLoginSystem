@@ -376,12 +376,37 @@ def unblock_user():
 def delete_user():
     try:
         content = request.json
-        _id = content['user_id']  # must stay user_id!
+        _id = content['user_id']  # must stay user_id
         deleted_user = dataLayer.delete_user(_id)
         resp = json.dumps(deleted_user, default=str), 200, {"Content-Type": "application/json"}
         return resp
     except Exception as e:
         return json.dumps('Delete failed: {}'.format(e), default=str), 401, {"Content-Type": "application/json"}
+
+
+# route to get the updated info of the user after the account information has changed
+@application.route('/get_user_info')
+def get_user_info():
+    try:
+        content = request.json
+        _id = content['_id']
+        selected_user = dataLayer.get_doc_by_user_id(_id)
+        keys = ["_id", "role", "first_name", "last_name", "email", "photo"]
+        new_dic = {key: selected_user[key] for key in keys}
+        response = application.response_class(
+            response=json.dumps(new_dic),
+            status=200,
+            mimetype='application/json',
+            headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+                     'Access-Control-Allow-Credentials': "true",
+                     'Access-Control-Allow-Headers': ["Content-Type"]
+                     }
+        )
+
+        return response
+
+    except Exception as error:
+        raise error
 
 
 @application.route('/make_admin/<string:_id>', methods=["POST"])
