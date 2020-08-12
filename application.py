@@ -393,20 +393,17 @@ def get_user_info():
         selected_user = dataLayer.get_doc_by_user_id(_id)
         keys = ["_id", "role", "first_name", "last_name", "email", "photo"]
         new_dic = {key: selected_user[key] for key in keys}
+
         response = application.response_class(
             response=json.dumps(new_dic),
             status=200,
-            mimetype='application/json',
-            headers={'Access-Control-Allow-Origin': "http://localhost:3000",
-                     'Access-Control-Allow-Credentials': "true",
-                     'Access-Control-Allow-Headers': ["Content-Type"]
-                     }
+            mimetype="application/json"
         )
 
         return response
 
-    except Exception as error:
-        raise error
+    except Exception as e:
+        return json.dumps(e, default=str), 400, {"Content-Type": "application/json"}
 
 
 @application.route('/make_admin/<string:_id>', methods=["POST"])
@@ -435,7 +432,7 @@ def change_email(_id):
 def edit_account_details():
     try:
         content = request.json
-        edited_user = dataLayer.edit_account_details(content)
+        dataLayer.edit_account_details(content)
 
         response = application.response_class(response=json.dumps("The details have been edited successfully!"),
                                               status=200,
