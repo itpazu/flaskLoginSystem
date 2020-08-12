@@ -385,7 +385,7 @@ def delete_user():
 
 
 # route to get the updated info of the user after the account information has changed
-@application.route('/get_user_info')
+@application.route('/get_user_info', methods=['GET', 'POST'])
 def get_user_info():
     try:
         content = request.json
