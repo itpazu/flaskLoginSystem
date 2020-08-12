@@ -315,9 +315,22 @@ class DataLayer:
         except Exception as error:
             raise error
 
+    # added this function to handle the editing of the user details
+    def edit_account_details(self, content):
+        _id = content['_id']
+        first_name = content['first_name']
+        last_name = content['last_name']
+        email = content['email']
+        try:
+            edit_user = self.__db.Users.find_one_and_update({"_id": _id}, {"set": {"first_name": first_name,
+                                                                                   "last_name": last_name,
+                                                                                   "email": email}})
+            return edit_user
+        except Exception as error:
+            raise error
+
     def log_attempt(self, email):
         try:
-
             email_attempts = self.__db.emailAttempts.find_one_and_update({"email": email},
                                                                          {"$inc": {"attempts": 1},
                                                                           "$set": {"creation": datetime.utcnow()}},

@@ -405,6 +405,29 @@ def change_email(_id):
     return resp
 
 
+# added this route to handle the account page edit submissions
+@application.route('/edit_account_details', methods=["POST"])
+def edit_account_details():
+    try:
+        content = request.json
+        edited_user = dataLayer.edit_account_details(content)
+
+        response = application.response_class(response=json.dumps("The details have been edited successfully: " +
+                                                                  edited_user),
+                                              status=200,
+                                              mimetype='application/json',
+                                              headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+                                                       'Access-Control-Allow-Credentials': "true",
+                                                       'Access-Control-Allow-Headers': ["Content-Type"]}
+                                              )
+        return response
+    except Exception as error:
+        response = application.response_class(response=json.dumps("update failed:" + str(error)),
+                                              status=401,
+                                              mimetype='application/json')
+        return response
+
+
 @application.route('/change_password', methods=["POST"])
 def change_password():
     try:
