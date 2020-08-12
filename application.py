@@ -412,8 +412,7 @@ def edit_account_details():
         content = request.json
         edited_user = dataLayer.edit_account_details(content)
 
-        response = application.response_class(response=json.dumps("The details have been edited successfully: " +
-                                                                  edited_user),
+        response = application.response_class(response=json.dumps("The details have been edited successfully!"),
                                               status=200,
                                               mimetype='application/json',
                                               headers={'Access-Control-Allow-Origin': "http://localhost:3000",
