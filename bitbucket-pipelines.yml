@@ -6,7 +6,7 @@ pipelines:
         script:
           - models="models"
           - db="db"
-          - zip keepershomeapi.zip application.py requirements.txt $db $models
+          - zip keepershomeapi.zip routes.py requirements.txt $db $models
           - pipe: atlassian/aws-elasticbeanstalk-deploy:0.2.3
             variables:
               AWS_ACCESS_KEY_ID: 'AKIAZEMZYKPMIHYCDKX3'
