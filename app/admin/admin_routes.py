@@ -1,13 +1,11 @@
 from flask import json, request, Response
 from app.admin import bp
-from app.db.Data_Layer_auth import DataLayer_auth
-from app.db.Data_Layer_admin import DataLayer_admin
+from app.db.Data_Layer_admin import DataLayerAdmin
 from app.decorators import Decorators
 from app.email import Email
 from app.login.login_routes import solicit_new_pass
 
-# dataLayer = DataLayer_auth()
-dataLayer = DataLayer_admin()
+dataLayer = DataLayerAdmin()
 decorators = Decorators()
 flask_email = Email()
 
@@ -91,3 +89,5 @@ def change_email(_id):
     changed_email = dataLayer.change_email(_id)
     resp = json.dumps(changed_email, default=str), 200, {"Content-Type": "application/json"}
     return resp
+
+

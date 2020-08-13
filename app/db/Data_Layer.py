@@ -7,10 +7,6 @@ class DataLayer():
         self.bcrypt = bcrypt
         self.__db = client.db
 
-        # self.__client = pymongo.MongoClient('10.150.54.176:27017', 27017, username=os.getenv("DB_USER_NAME"),
-        #                                password=os.getenv("DB_PASSWORD"), authSource="admin")
-        # self.__db= self.__client['keeperHome']
-
     def get_db(self):
         return self.__db
 

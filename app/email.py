@@ -1,18 +1,14 @@
 from flask import current_app
 from flask import json, render_template
 from flask_mail import Message
-from app.db.Data_Layer import DataLayer
 from app import mail
 
-dataLayer = DataLayer()
 
 class Email():
 
     @staticmethod
-    def notify_admins(email):
+    def notify_admins(email, recipients):
         try:
-            admin_emails = list(dataLayer.get_admins())
-            recipients = [admin.get("email") for admin in admin_emails]
             msg = Message('Suspicious login attempts to account {}'.format(email), recipients=recipients)
             msg.body = render_template('notify_admin.txt', email_address=email)
             msg.html = render_template('notify_admin.html',

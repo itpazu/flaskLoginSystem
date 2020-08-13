@@ -1,10 +1,11 @@
-from app.db.Data_Layer_auth import DataLayer_auth
+from app.db.Data_Layer_auth import DataLayerAuth
 from functools import wraps
 from flask import json, request
 from flask import current_app
 
 
-db = DataLayer_auth()
+db = DataLayerAuth()
+
 class Decorators():
 
 

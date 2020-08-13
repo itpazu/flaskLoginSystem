@@ -2,12 +2,10 @@ from app.login import bp
 from app.decorators import Decorators
 from flask import json, request, Response
 from datetime import datetime, timedelta
-from app.db.Data_Layer import DataLayer
-from app.db.Data_Layer_auth import DataLayer_auth
+from app.db.Data_Layer_auth import DataLayerAuth
 from app.email import Email
 
-# dataLayer = DataLayer()
-dataLayer = DataLayer_auth()
+dataLayer = DataLayerAuth()
 decorators = Decorators()
 email_helper = Email()
 
@@ -77,8 +75,11 @@ def log_in():
             if execute_login:
                 # dataLayer.delete_ip_attempts(ip_address)
                 dataLayer.delete_email_attempts(email)
-                keys = ["_id", "role", "first_name", "last_name"]
+                keys = ["_id", "role", "first_name", "last_name", "email", "photo"]
                 new_dic = {key: execute_login[key] for key in keys}
+                if new_dic["photo"] != '':
+                    new_photo = new_dic["photo"].decode()
+                    new_dic["photo"] = new_photo
                 response = Response(
                     response=json.dumps(new_dic),
                     status=200,
@@ -113,7 +114,9 @@ def log_in():
                 elif failed_email["attempts"] == 10:
                     dataLayer.block_current_password(email, True)
                     try:
-                        email_helper.notify_admins(email)
+                        admin_emails = list(dataLayer.get_admins())
+                        recipients = [admin.get("email") for admin in admin_emails]
+                        email_helper.notify_admins(email, recipients)
                     except Exception as error:
                         raise Exception(str(error))
                     raise Exception("user is blocked")

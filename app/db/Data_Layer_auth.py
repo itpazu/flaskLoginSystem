@@ -1,11 +1,11 @@
 from app.models.user import User
 from app.Util import decode_token, encode_token,  decode_refresh_token, encode_refresh_token
 import secrets
-from .Data_Layer_admin import DataLayer_admin
+from .Data_Layer_admin import DataLayerAdmin
 from pymongo import ReturnDocument
 from datetime import datetime
 
-class DataLayer_auth(DataLayer_admin):
+class DataLayerAuth(DataLayerAdmin):
     def __init__(self):
         super().__init__()
         self.__db = self.get_db()
@@ -174,40 +174,6 @@ class DataLayer_auth(DataLayer_admin):
     def get_attempts(self, email):
         try:
             return self.__db.emailAttempts.find_one({"email": email}, {"attempts": 1, "_id": 0})
-        except Exception as error:
-            raise error
-
-    def delete_ip_attempts(self, ip_address):
-        try:
-            self.__db.ipAttempts.find_one_and_delete({"ip_address": ip_address})
-        except Exception as error:
-            raise error
-
-    def delete_email_attempts(self, email):
-        try:
-            self.__db.emailAttempts.find_one_and_delete({"email": email})
-        except Exception as error:
-            raise error
-
-    def delete_block_field(self, email):
-        try:
-            self.__db.Users.update({"email": email}, {"$unset": {"blocked": 1}})
-
-        except Exception as error:
-            raise error
-
-    def block_current_password(self, email, block=None):
-        try:
-            if block is None:
-                password = self.encrypt_pass(secrets.token_hex())
-                self.__db.Users.find_one_and_update({"email": email}, {"$set": {"password": password,
-                                                                                "last_update_time": User.updated_at()}})
-
-            password = self.encrypt_pass(secrets.token_hex())
-            self.__db.Users.find_one_and_update({"email": email}, {"$set": {"password": password,
-                                                                            "last_update_time": User.updated_at(),
-                                                                            "blocked": True}},
-                                                upsert=True)
         except Exception as error:
             raise error
 
