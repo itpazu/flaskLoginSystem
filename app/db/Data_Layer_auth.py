@@ -1,16 +1,14 @@
-# from app import DB
 from app.models.user import User
-from app.Util import decode_token, encode_token, generate_id, decode_refresh_token, encode_refresh_token
+from app.Util import decode_token, encode_token,  decode_refresh_token, encode_refresh_token
 import secrets
-from .Data_Layer import DataLayer
+from .Data_Layer_admin import DataLayer_admin
 from pymongo import ReturnDocument
 from datetime import datetime
 
-class DataLayer_auth(DataLayer):
+class DataLayer_auth(DataLayer_admin):
     def __init__(self):
         super().__init__()
         self.__db = self.get_db()
-        # print(help(DataLayer_auth))
 
     def log_user(self, email, password):
 
@@ -91,14 +89,13 @@ class DataLayer_auth(DataLayer):
             if attempts is not None and attempts["attempts"] >= 10:
                 raise Exception('user is blocked. Turn to an admin')
 
-            password = user_dic['password']  # db
+            password = user_dic['password']
             user_id = user_dic['_id']
             role = user_dic['role']
-            # generate new password
 
             reset_token = encode_token(user_id, password, role)
 
-            new_user_dic = self.store_reset_token(user_id, reset_token)  # store new pass
+            new_user_dic = self.store_reset_token(user_id, reset_token)
 
             return new_user_dic
 

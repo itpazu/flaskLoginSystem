@@ -59,7 +59,7 @@ def test_route():
 @bp.route('/login', methods=['POST', 'OPTIONS'])
 def log_in():
     if request.method == "OPTIONS":
-        return decorators._build_cors_preflight_response()
+        return decorators.build_cors_preflight_response()
     elif request.method == "POST":
         try:
             content = request.json
@@ -113,7 +113,7 @@ def log_in():
                 elif failed_email["attempts"] == 10:
                     dataLayer.block_current_password(email, True)
                     try:
-                        notify_admins = email_helper.notify_admins(email)
+                        email_helper.notify_admins(email)
                     except Exception as error:
                         raise Exception(str(error))
                     raise Exception("user is blocked")
@@ -130,7 +130,7 @@ def log_in():
 @bp.route('/check_token', methods=['GET', 'POST', 'OPTIONS'])
 def check_token_for_pass_reset():
     if request.method == "OPTIONS":
-        return decorators._build_cors_preflight_response()
+        return decorators.build_cors_preflight_response()
 
     elif request.method == "POST":
         try:

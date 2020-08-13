@@ -13,26 +13,22 @@ mail = Mail()
 client = PyMongo()
 
 def create_app(config_class=Config):
-    application = Flask(__name__)
-    application.config.from_object(config_class)
-    print(application.config)
-    bcrypt.init_app(application)
-    mail.init_app(application)
-    # client.init_app(application)
-    client.init_app(application, connect=True, authSource="admin", username=os.getenv('DB_USER_NAME'), password=os.getenv('DB_PASSWORD'))
-    # print(client.db)
-    CORS(application)
-    CORS(application, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:3000"}})
+    app = Flask(__name__)
+    app.config.from_object(config_class)
+    bcrypt.init_app(app)
+    mail.init_app(app)
+    client.init_app(app, connect=True, authSource="admin", username=os.getenv('DB_USER_NAME'), password=os.getenv('DB_PASSWORD'))
+    CORS(app)
+    CORS(app, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:3000"}})
 
     from app.main import bp as main_bp
-    application.register_blueprint(main_bp)
+    app.register_blueprint(main_bp)
 
     from app.login import bp as login_bp
-    application.register_blueprint(login_bp)
+    app.register_blueprint(login_bp)
 
-    return application
+    from app.admin import bp as admin_bp
+    app.register_blueprint(admin_bp)
 
-# from app.main import routes
-# from app.db import Data_Layer
-# # from app.db import Data_Layer_auth
-# from app.decorators import Decorators
+    return app
+
