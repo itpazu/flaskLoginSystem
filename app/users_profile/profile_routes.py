@@ -24,10 +24,7 @@ def get_user_info():
         response = Response(
             response=json.dumps(new_dic),
             status=200,
-            mimetype="application/json",
-            headers={'Access-Control-Allow-Origin': "http://localhost:3000",
-                     'Access-Control-Allow-Credentials': "true",
-                     'Access-Control-Allow-Headers': ["Content-Type"]}
+            mimetype="application/json"
         )
         return response
     except Exception as e:

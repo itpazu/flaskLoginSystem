@@ -6,7 +6,7 @@ from flask import current_app
 db = DataLayerAuth()
 
 
-class Decorators:
+class Decorators():
 
     @staticmethod
     def token_required(f):

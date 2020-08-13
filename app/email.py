@@ -4,7 +4,7 @@ from flask_mail import Message
 from app import mail
 
 
-class Email:
+class Email():
 
     @staticmethod
     def notify_admins(email, recipients):
