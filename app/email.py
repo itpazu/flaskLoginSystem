@@ -20,7 +20,6 @@ class Email():
 
     @staticmethod
     def send_password_by_mail(email_address, user_id, token):
-
         try:
             url = 'http://localhost:3000/change_pass/path?id=' + user_id + '&token=' + token
 
