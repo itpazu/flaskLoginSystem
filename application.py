@@ -216,8 +216,9 @@ def log_in():
                 # added email and photo to keys list
                 keys = ["_id", "role", "first_name", "last_name", "email", "photo"]
                 new_dic = {key: execute_login[key] for key in keys}
-                new_photo = new_dic["photo"].decode()
-                new_dic["photo"] = new_photo
+                if new_dic["photo"] != '':
+                    new_photo = new_dic["photo"].decode()
+                    new_dic["photo"] = new_photo
                 response = application.response_class(
                     response=json.dumps(new_dic),
                     status=200,
@@ -396,8 +397,9 @@ def get_user_info():
         selected_user = dataLayer.get_doc_by_user_id(_id)
         keys = ["_id", "role", "first_name", "last_name", "email", "photo"]
         new_dic = {key: selected_user[key] for key in keys}
-        new_photo = new_dic["photo"].decode()
-        new_dic["photo"] = new_photo
+        if new_dic["photo"] != '':
+            new_photo = new_dic["photo"].decode()
+            new_dic["photo"] = new_photo
         response = application.response_class(
             response=json.dumps(new_dic),
             status=200,
