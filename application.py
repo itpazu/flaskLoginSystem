@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from functools import wraps
 from datetime import datetime, timedelta
 from flask_mail import Mail, Message
+import base64
 
 mail_settings = {
     "MAIL_SERVER": 'smtp.gmail.com',
@@ -215,6 +216,8 @@ def log_in():
                 # added email and photo to keys list
                 keys = ["_id", "role", "first_name", "last_name", "email", "photo"]
                 new_dic = {key: execute_login[key] for key in keys}
+                new_photo = new_dic["photo"].decode()
+                new_dic["photo"] = new_photo
                 response = application.response_class(
                     response=json.dumps(new_dic),
                     status=200,
@@ -393,9 +396,52 @@ def get_user_info():
         selected_user = dataLayer.get_doc_by_user_id(_id)
         keys = ["_id", "role", "first_name", "last_name", "email", "photo"]
         new_dic = {key: selected_user[key] for key in keys}
-
+        new_photo = new_dic["photo"].decode()
+        new_dic["photo"] = new_photo
         response = application.response_class(
             response=json.dumps(new_dic),
+            status=200,
+            mimetype="application/json"
+        )
+
+        return response
+
+    except Exception as e:
+        return json.dumps(e, default=str), 400, {"Content-Type": "application/json"}
+
+
+# routes for adding and deleting images
+@application.route('/add_photo', methods=["POST"])
+def add_photo():
+    try:
+        content = request.json
+        _id = content["_id"]
+        photo = content["photo"]
+        with open(str(photo), "rb") as imageFile:
+            string = base64.b64decode(imageFile.read())
+        dataLayer.add_photo(_id, string)
+
+        response = application.response_class(
+            response=json.dumps(string),
+            status=200,
+            mimetype="application/json"
+        )
+
+        return response
+
+    except Exception as e:
+        return json.dumps(e, default=str), 400, {"Content-Type": "application/json"}
+
+
+@application.route('/delete_photo', methods=["DELETE"])
+def delete_photo():
+    try:
+        content = request.json
+        _id = content["_id"]
+        dataLayer.delete_photo(_id)
+
+        response = application.response_class(
+            response=json.dumps("The photo was deleted successfully!"),
             status=200,
             mimetype="application/json"
         )

@@ -228,9 +228,9 @@ class DataLayer:
             raise error
 
     # added the 2 functions below for adding and deleting profile photos
-    def add_photo(self, _id, photo):
+    def add_photo(self, _id, string):
         try:
-            add_photo = self.__db.Users.update({"_id": _id}, {"$set": {"photo": photo}})
+            add_photo = self.__db.Users.update({"_id": _id}, {"$set": {"photo": string}})
             return add_photo
         except Exception as error:
             raise('failed to add photo' + str(error))
