@@ -9,6 +9,7 @@ dataLayer = DataLayerAdmin()
 decorators = Decorators()
 flask_email = Email()
 
+
 @bp.route('/all_users', methods=['GET', 'POST'])
 @decorators.admin_required
 def all_users():

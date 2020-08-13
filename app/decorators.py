@@ -3,11 +3,10 @@ from functools import wraps
 from flask import json, request
 from flask import current_app
 
-
 db = DataLayerAuth()
 
-class Decorators():
 
+class Decorators():
 
     @staticmethod
     def token_required(f):

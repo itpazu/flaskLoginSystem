@@ -182,8 +182,8 @@ def change_password():
         return response
     except Exception as err:
         response = Response(response=json.dumps("update failed:" + str(err)),
-                                              status=401,
-                                              mimetype='application/json')
+                            status=401,
+                            mimetype='application/json')
         return response
 
 @bp.route('/newpass_solicit', methods=['GET', 'POST'])

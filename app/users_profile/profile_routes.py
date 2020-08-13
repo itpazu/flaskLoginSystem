@@ -39,8 +39,8 @@ def add_photo():
     try:
         content = request.json
         _id = content["_id"]
-        photo = content["photo"]
-        with open(str(photo), "rb") as imageFile:
+        file = request.files['file']
+        with open(file, "rb") as imageFile:
             string = base64.b64decode(imageFile.read())
         dataLayer.add_photo(_id, string)
 

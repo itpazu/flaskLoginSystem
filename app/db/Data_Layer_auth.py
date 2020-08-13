@@ -1,9 +1,10 @@
 from app.models.user import User
-from app.Util import decode_token, encode_token,  decode_refresh_token, encode_refresh_token
+from app.Util import decode_token, encode_token, decode_refresh_token, encode_refresh_token
 import secrets
 from .Data_Layer_admin import DataLayerAdmin
 from pymongo import ReturnDocument
 from datetime import datetime
+
 
 class DataLayerAuth(DataLayerAdmin):
     def __init__(self):
@@ -102,8 +103,6 @@ class DataLayerAuth(DataLayerAdmin):
         except Exception as error:
             raise error
 
-
-
     def store_token(self, user_id, access_token, csrf_token, refresh_token):
         try:
             store_token = self.__db.Users.find_one_and_update({"_id": user_id}, {"$set": {"token": access_token,
@@ -158,7 +157,6 @@ class DataLayerAuth(DataLayerAdmin):
         except Exception as error:
             raise error
 
-
     def log_attempt(self, email):
         try:
             email_attempts = self.__db.emailAttempts.find_one_and_update({"email": email},
@@ -176,6 +174,3 @@ class DataLayerAuth(DataLayerAdmin):
             return self.__db.emailAttempts.find_one({"email": email}, {"attempts": 1, "_id": 0})
         except Exception as error:
             raise error
-
-
-
