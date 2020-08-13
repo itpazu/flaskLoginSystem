@@ -9,6 +9,7 @@ dataLayer = DataLayerAuth()
 decorators = Decorators()
 email_helper = Email()
 
+
 @bp.route('/refresh_token', methods=['POST', 'GET'])
 @decorators.refresh_token_required
 def refresh_token(user_dic):
@@ -109,7 +110,7 @@ def log_in():
                     try:
                         solicit_new_pass()
                     except Exception as error:
-                        raise Exception (error)
+                        raise Exception(error)
                     raise Exception('too many failed attempts, a password reset has been sent to your email.')
                 elif failed_email["attempts"] == 10:
                     dataLayer.block_current_password(email, True)
@@ -173,6 +174,7 @@ def logout():
 
     return response
 
+
 @bp.route('/change_password', methods=["POST"])
 def change_password():
     try:
@@ -180,19 +182,20 @@ def change_password():
         changed_password = dataLayer.change_password(content)
 
         response = Response(response=json.dumps("Password has been changed successfully:" +
-                                                                  changed_password),
-                                              status=200,
-                                              mimetype='application/json',
-                                              headers={'Access-Control-Allow-Origin': "http://localhost:3000",
-                                                       'Access-Control-Allow-Credentials': "true",
-                                                       'Access-Control-Allow-Headers': ["Content-Type"]}
-                                              )
+                                                changed_password),
+                            status=200,
+                            mimetype='application/json',
+                            headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+                                     'Access-Control-Allow-Credentials': "true",
+                                     'Access-Control-Allow-Headers': ["Content-Type"]}
+                            )
         return response
     except Exception as err:
         response = Response(response=json.dumps("update failed:" + str(err)),
-                                              status=401,
-                                              mimetype='application/json')
+                            status=401,
+                            mimetype='application/json')
         return response
+
 
 @bp.route('/newpass_solicit', methods=['GET', 'POST'])
 def solicit_new_pass():

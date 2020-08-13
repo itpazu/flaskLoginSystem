@@ -9,6 +9,7 @@ dataLayer = DataLayerProfile()
 decorators = Decorators()
 flask_email = Email()
 
+
 @bp.route('/get_user_info', methods=['GET', 'POST'])
 def get_user_info():
     try:
@@ -20,10 +21,13 @@ def get_user_info():
         if new_dic["photo"] != '':
             new_photo = new_dic["photo"].decode()
             new_dic["photo"] = new_photo
-        response = Response (
+        response = Response(
             response=json.dumps(new_dic),
             status=200,
-            mimetype="application/json"
+            mimetype="application/json",
+            headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+                     'Access-Control-Allow-Credentials': "true",
+                     'Access-Control-Allow-Headers': ["Content-Type"]}
         )
         return response
     except Exception as e:
@@ -35,8 +39,8 @@ def add_photo():
     try:
         content = request.json
         _id = content["_id"]
-        photo = content["photo"]
-        with open(str(photo), "rb") as imageFile:
+        file = request.files['file']
+        with open(file, "rb") as imageFile:
             string = base64.b64decode(imageFile.read())
         dataLayer.add_photo(_id, string)
 
@@ -72,15 +76,15 @@ def edit_account_details():
         content = request.json
         dataLayer.edit_account_details(content)
         response = Response(response=json.dumps("The details have been edited successfully!"),
-                                              status=200,
-                                              mimetype='application/json',
-                                              headers={'Access-Control-Allow-Origin': "http://localhost:3000",
-                                                       'Access-Control-Allow-Credentials': "true",
-                                                       'Access-Control-Allow-Headers': ["Content-Type"]}
-                                              )
+                            status=200,
+                            mimetype='application/json',
+                            headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+                                     'Access-Control-Allow-Credentials': "true",
+                                     'Access-Control-Allow-Headers': ["Content-Type"]}
+                            )
         return response
     except Exception as error:
         response = Response(response=json.dumps("update failed:" + str(error)),
-                                              status=401,
-                                              mimetype='application/json')
+                            status=401,
+                            mimetype='application/json')
         return response

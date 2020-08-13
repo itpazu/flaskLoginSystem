@@ -9,6 +9,7 @@ dataLayer = DataLayerAdmin()
 decorators = Decorators()
 flask_email = Email()
 
+
 @bp.route('/all_users', methods=['GET', 'POST'])
 @decorators.admin_required
 def all_users():
@@ -20,7 +21,7 @@ def all_users():
             all_users_list.append(i)
 
         response = Response(response=(json.dumps({"users": all_users_list}, default=str)), status=200,
-                                              mimetype="application/json")
+                            mimetype="application/json")
         return response
 
     except Exception as e:
@@ -89,5 +90,3 @@ def change_email(_id):
     changed_email = dataLayer.change_email(_id)
     resp = json.dumps(changed_email, default=str), 200, {"Content-Type": "application/json"}
     return resp
-
-

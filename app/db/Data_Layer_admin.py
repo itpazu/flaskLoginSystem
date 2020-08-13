@@ -4,12 +4,12 @@ from .Data_Layer import DataLayer
 from app.models.user import User
 import secrets
 
+
 class DataLayerAdmin(DataLayer):
     def __init__(self):
         super().__init__()
         self.__db = self.get_db()
         # print(help(DataLayer_auth))
-
 
     def all_users(self):
         try:
@@ -34,7 +34,6 @@ class DataLayerAdmin(DataLayer):
             return admins
         except Exception as error:
             raise Exception("failed to get admins: {}".format(str(error)))
-
 
     def get_doc_by_user_id(self, user_id):
         try:
@@ -68,7 +67,6 @@ class DataLayerAdmin(DataLayer):
         except Exception as error:
             raise error
 
-
     def delete_user(self, _id):
         try:
             deleted = self.__db.Users.delete_one({"_id": _id})
@@ -85,8 +83,8 @@ class DataLayerAdmin(DataLayer):
             if self.__db.Users.find_one({"_id": _id}):
                 if self.__db.Users.find_one({"_id": _id, "role": 'main'}):
                     self.__db.Users.find_one_and_update({"_id": _id}, {"$set": {"role": 'main',
-                                                                                        "last_update_time":
-                                                                                            User.updated_at()}})
+                                                                                "last_update_time":
+                                                                                    User.updated_at()}})
                     added_admin = {'status': 'The user is now an main!'}
                     return added_admin
                 else:
@@ -101,8 +99,8 @@ class DataLayerAdmin(DataLayer):
             if self.__db.Users.find_one({"_id": _id}):
                 if self.__db.Users.find_one({"_id": _id, "role": 'main'}):
                     self.__db.Users.find_one_and_update({"_id": _id}, {"$set": {"role": 'main',
-                                                                                        "last_update_time":
-                                                                                            User.updated_at()}})
+                                                                                "last_update_time":
+                                                                                    User.updated_at()}})
                     removed_admin = {'status': 'The user is no longer an main!'}
                     return removed_admin
                 else:
@@ -111,7 +109,6 @@ class DataLayerAdmin(DataLayer):
                 raise ValueError('The user does not exist!')
         except ValueError as error:
             raise error
-
 
     def change_email(self, _id):
         email = request.get_json()['email']
@@ -128,7 +125,6 @@ class DataLayerAdmin(DataLayer):
                 raise ValueError('The user does not exist!')
         except ValueError as error:
             raise error
-
 
     def delete_ip_attempts(self, ip_address):
         try:
@@ -163,4 +159,3 @@ class DataLayerAdmin(DataLayer):
                                                 upsert=True)
         except Exception as error:
             raise error
-
