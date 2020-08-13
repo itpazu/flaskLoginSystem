@@ -4,13 +4,13 @@ from app.db.Data_Layer_user_profile import DataLayerProfile
 from app.decorators import Decorators
 from app.email import Email
 import base64
-from app.make_response import build_cors_preflight_response
+from app.make_response import build_cors_preflight_response, response_with_headers
 
 dataLayer = DataLayerProfile()
 decorators = Decorators()
 flask_email = Email()
 
-@bp.route('/get_user_info', methods=['GET', 'POST'])
+@bp.route('/get_user_info', methods=['GET', 'POST', 'OPTIONS'])
 def get_user_info():
     if request.method == "OPTIONS":
         return build_cors_preflight_response()
@@ -24,12 +24,9 @@ def get_user_info():
             if new_dic["photo"] != '':
                 new_photo = new_dic["photo"].decode()
                 new_dic["photo"] = new_photo
-            response = Response (
-                response=json.dumps(new_dic),
-                status=200,
-                mimetype="application/json"
-            )
-            return response
+
+            return response_with_headers(new_dic)
+
         except Exception as e:
             return json.dumps(e, default=str), 400, {"Content-Type": "application/json"}
 
@@ -70,7 +67,7 @@ def delete_photo():
         return json.dumps(e, default=str), 400, {"Content-Type": "application/json"}
 
 
-@bp.route('/edit_account_details', methods=["POST"])
+@bp.route('/edit_account_details', methods=["POST", "OPTIONS"])
 def edit_account_details():
     if request.method == "OPTIONS":
         return build_cors_preflight_response()
@@ -78,14 +75,8 @@ def edit_account_details():
         try:
             content = request.json
             dataLayer.edit_account_details(content)
-            response = Response(response=json.dumps("The details have been edited successfully!"),
-                                                  status=200,
-                                                  mimetype='application/json',
-                                                  headers={'Access-Control-Allow-Origin': "http://localhost:3000",
-                                                           'Access-Control-Allow-Credentials': "true",
-                                                           'Access-Control-Allow-Headers': ["Content-Type"]}
-                                                  )
-            return response
+            return response_with_headers("The details have been edited successfully!")
+
         except Exception as error:
             response = Response(response=json.dumps("update failed:" + str(error)),
                                                   status=401,
