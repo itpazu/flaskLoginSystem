@@ -2,18 +2,19 @@ from flask import json, request, Response
 import os
 from app.main import bp
 from app.db.Data_Layer import DataLayer
+from app.db.Data_Layer_auth import DataLayer_auth
 from app.decorators import Decorators
 from app.email import Email
 from app.login.login_routes import solicit_new_pass
 
-dataLayer = DataLayer()
+# dataLayer = DataLayer()
+dataLayer = DataLayer_auth()
 decorators = Decorators()
 flask_email = Email()
 
 @bp.route('/', methods=['POST', 'GET'])
 def health_check_aws():
     return 'success', 200, {"Content-Type": "application/json"}
-
 
 
 @bp.route('/all_users', methods=['GET', 'POST'])
@@ -49,8 +50,6 @@ def add_user():
 
     except Exception as error:
         return json.dumps(error, default=str), 400, {"Content-Type": "application/json"}
-
-
 
 
 
@@ -101,13 +100,8 @@ def change_email(_id):
     return resp
 
 
-
-
-
-
-
 def _build_cors_preflight_response():
-    response = application.response_class(
+    response = Response(
         status=200,
         mimetype='application/json',
         headers={'Access-Control-Allow-Origin': "http://localhost:3000", 'Access-Control-Allow-Credentials': "true",

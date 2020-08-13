@@ -5,7 +5,8 @@ from flask import current_app
 
 ##perhaps changing current app, response classs to make response
 
-class Decorators(DataLayer_auth):
+db = DataLayer_auth()
+class Decorators():
 
 
     @staticmethod
@@ -26,7 +27,7 @@ class Decorators(DataLayer_auth):
                 except Exception as error:
                     raise ValueError('{} data is missing in the request'.format(str(error)))
 
-                DataLayer_auth.authenticate_user(user_id, token, csrf_token)
+                db.authenticate_user(user_id, token, csrf_token)
 
             except Exception as err:
                 if str(err) == 'Signature expired':
@@ -58,16 +59,17 @@ class Decorators(DataLayer_auth):
                     content = request.json
                     csrf_token = request.headers.get('Authorization')
 
-                    cookie = request.cookies  # commented out for development only
-                    token = cookie.get('token')
+                    # cookie = request.cookies  # commented out for development only
+                    # token = cookie.get('token')
+                    token = request.headers.get('token') ## dev only
                     user_id = content['_id']
 
                 except Exception as error:
                     raise ValueError('{} data is missing in the request'.format(str(error)))
 
-                auth = DataLayer_auth.authenticate_user(user_id, token, csrf_token)
-                if auth['role'] != 'main':
-                    raise Exception('user is not main')
+                auth = db.authenticate_user(user_id, token, csrf_token)
+                if auth['role'] != 'admin':
+                    raise Exception('user is not admin')
 
             except Exception as err:
                 if str(err) == 'Signature expired':
@@ -94,16 +96,16 @@ class Decorators(DataLayer_auth):
         def decorated(*args, **kwargs):
             try:
                 content = request.json
-                cookie = request.cookies  # commented out for development only
+                # cookie = request.cookies  # commented out for development only
 
                 try:
-                    # ref_token = request.headers.get('refresh_token')  ##for dev only
-                    ref_token = cookie.get('refresh_token')
+                    ref_token = request.headers.get('refresh_token')  ##for dev only
+                    # ref_token = cookie.get('refresh_token')
                     user_id = content['_id']
                 except Exception as error:
                     raise ValueError('{} data is missing in the request'.format(str(error)))
 
-                authenticated_user = DataLayer_auth.authenticate_refresh_token(user_id, ref_token)
+                authenticated_user = db.authenticate_refresh_token(user_id, ref_token)
 
             except Exception as err:
                 response = current_app.response_class(

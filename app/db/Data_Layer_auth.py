@@ -11,7 +11,6 @@ class DataLayer_auth(DataLayer):
         super().__init__()
         self.__db = self.get_db()
         # print(help(DataLayer_auth))
-        print(self.__db)
 
     def log_user(self, email, password):
 
@@ -48,7 +47,6 @@ class DataLayer_auth(DataLayer):
         if user_id != decoded_token['_id']:
             raise Exception('ID do not match. please log in again')
 
-
         if csrf_token is not None:
             csrf_from_db = user_from_db['csrf_token']
             if str(csrf_token) != str(csrf_from_db):
@@ -83,18 +81,6 @@ class DataLayer_auth(DataLayer):
         except Exception as error:
             raise Exception(str(error))
 
-    def log_attempt(self, email):
-        try:
-            email_attempts = self.__db.emailAttempts.find_one_and_update({"email": email},
-                                                                         {"$inc": {"attempts": 1},
-                                                                          "$set": {"creation": datetime.utcnow()}},
-                                                                         upsert=True,
-                                                                         return_document=ReturnDocument.AFTER)
-            return email_attempts
-
-        except Exception as error:
-            raise error
-
     def solicit_new_password(self, email):
         try:
             user_dic = self.get_doc_by_email(email)
@@ -103,7 +89,7 @@ class DataLayer_auth(DataLayer):
             attempts = self.get_attempts(email)
 
             if attempts is not None and attempts["attempts"] >= 10:
-                raise Exception('user is blocked. Turn to an main')
+                raise Exception('user is blocked. Turn to an admin')
 
             password = user_dic['password']  # db
             user_id = user_dic['_id']
@@ -119,12 +105,15 @@ class DataLayer_auth(DataLayer):
         except Exception as error:
             raise error
 
+
+
     def store_token(self, user_id, access_token, csrf_token, refresh_token):
         try:
             store_token = self.__db.Users.find_one_and_update({"_id": user_id}, {"$set": {"token": access_token,
-                                                                             'csrf_token': csrf_token,
-                                                                             'refresh_token': refresh_token}}, {"password": 0, "creation_time": 0,
-                                                                                                                "last_update_time": 0 },
+                                                                                          'csrf_token': csrf_token,
+                                                                                          'refresh_token': refresh_token}},
+                                                              {"password": 0, "creation_time": 0,
+                                                               "last_update_time": 0},
                                                               return_document=ReturnDocument.AFTER)
             return store_token
 
@@ -141,10 +130,11 @@ class DataLayer_auth(DataLayer):
 
     def store_reset_token(self, user_id, access_token):
         try:
-            store_token = self.__db.Users.find_one_and_update({"_id": user_id}, {"$set": {"token": access_token}}, return_document=ReturnDocument.AFTER)
+            store_token = self.__db.Users.find_one_and_update({"_id": user_id}, {"$set": {"token": access_token}},
+                                                              return_document=ReturnDocument.AFTER)
             return store_token
         except Exception as error:
-            raise('failed to store token' + str(error))
+            raise ('failed to store token' + str(error))
 
     def change_password(self, content):
         try:
@@ -170,6 +160,7 @@ class DataLayer_auth(DataLayer):
 
         except Exception as error:
             raise error
+
 
     def log_attempt(self, email):
         try:

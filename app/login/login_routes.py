@@ -15,11 +15,11 @@ email_helper = Email()
 @decorators.refresh_token_required
 def refresh_token(user_dic):
     try:
-        fresh_tokens = decorators.refresh_token(user_dic)
+        fresh_tokens = dataLayer.refresh_token(user_dic)
         token = fresh_tokens['access_token']
         refresh_token = fresh_tokens['refresh_token']
 
-        response = bp.response_class(
+        response = Response(
             response=json.dumps('authorized'),
             status=200,
             mimetype='application/json',
@@ -142,7 +142,7 @@ def check_token_for_pass_reset():
                 raise Exception('{} data is missing in the request'.format(str(error)))
 
             dataLayer.authenticate_user(user_id, token)
-            response = bp.response_class(
+            response = Response(
                 response=json.dumps('token approved'),
                 status=200,
                 mimetype='application/json',
@@ -160,7 +160,7 @@ def check_token_for_pass_reset():
 
 @bp.route('/logout', methods=['GET', 'POST'])
 def logout():
-    response = bp.response_class(
+    response = Response(
         response='logout',
         status=200,
         mimetype='application/json',
@@ -176,7 +176,7 @@ def change_password():
         content = request.json
         changed_password = dataLayer.change_password(content)
 
-        response = bp.response_class(response=json.dumps("Password has been changed successfully:" +
+        response = Response(response=json.dumps("Password has been changed successfully:" +
                                                                   changed_password),
                                               status=200,
                                               mimetype='application/json',
@@ -186,7 +186,7 @@ def change_password():
                                               )
         return response
     except Exception as err:
-        response = bp.response_class(response=json.dumps("update failed:" + str(err)),
+        response = Response(response=json.dumps("update failed:" + str(err)),
                                               status=401,
                                               mimetype='application/json')
         return response
