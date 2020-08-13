@@ -13,7 +13,7 @@ flask_email = Email()
 @bp.route('/get_user_info', methods=['GET', 'POST', 'OPTIONS'])
 def get_user_info():
     if request.method == "OPTIONS":
-        return build_cors_preflight_response()
+        return decorators.build_cors_preflight_response()
     elif request.method == "POST":
         try:
             content = request.json
@@ -70,7 +70,7 @@ def delete_photo():
 @bp.route('/edit_account_details', methods=["POST", "OPTIONS"])
 def edit_account_details():
     if request.method == "OPTIONS":
-        return build_cors_preflight_response()
+        return decorators.build_cors_preflight_response()
     elif request.method == "POST":
         try:
             content = request.json
