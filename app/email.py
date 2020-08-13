@@ -2,8 +2,6 @@ from flask import current_app
 from flask import json, render_template
 from flask_mail import Message
 from app import mail
-
-
 class Email():
 
     @staticmethod
@@ -31,14 +29,5 @@ class Email():
         except Exception as error:
             raise ValueError("failed to send email {}".format(str(error)))
 
-        resp = current_app.response_class(
-            response=json.dumps({"message": "email to the new user has been sent successfully",
-                                 "user_id": user_id}),
-            status=200,
-            mimetype='application/json',
-            headers={'Access-Control-Allow-Origin': "http://localhost:3000",
-                     'Access-Control-Allow-Credentials': "true",
-                     'Access-Control-Allow-Headers': "Content-Type",
-                     }
-        )
-        return resp
+        return {"message": "email to the new user has been sent successfully",
+                                 "user_id": user_id}

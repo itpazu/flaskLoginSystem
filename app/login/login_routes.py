@@ -4,6 +4,8 @@ from flask import json, request, Response
 from datetime import datetime, timedelta
 from app.db.Data_Layer_auth import DataLayerAuth
 from app.email import Email
+from app.make_response import generate_response, response_with_headers, response_with_token, build_cors_preflight_response
+
 
 dataLayer = DataLayerAuth()
 decorators = Decorators()
@@ -15,25 +17,15 @@ def refresh_token(user_dic):
     try:
         fresh_tokens = dataLayer.refresh_token(user_dic)
         token = fresh_tokens['access_token']
-        refresh_token = fresh_tokens['refresh_token']
+        fresh_token = fresh_tokens['refresh_token']
 
-        response = Response(
-            response=json.dumps('authorized'),
-            status=200,
-            mimetype='application/json',
-            headers={'Access-Control-Allow-Origin': "http://localhost:3000",
-                     'Access-Control-Allow-Credentials': "true",
-                     'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
-                     'Access-Control-Expose-Headers': ["Authorization"],
-                     }
-
-        )
+        response = response_with_token('authorized')
 
         response.set_cookie('token', value=token, httponly=True,
                             domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
                             path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
                             samesite='none')
-        response.set_cookie('refresh_token', value=refresh_token, httponly=True,
+        response.set_cookie('refresh_token', value=fresh_token, httponly=True,
                             domain='keepershomestaging-env.eba-b9pnmwmp.eu-central-1.elasticbeanstalk.com',
                             path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
                             samesite='none')
@@ -57,7 +49,7 @@ def test_route():
 @bp.route('/login', methods=['POST', 'OPTIONS'])
 def log_in():
     if request.method == "OPTIONS":
-        return decorators.build_cors_preflight_response()
+        return build_cors_preflight_response()
     elif request.method == "POST":
         try:
             content = request.json
@@ -133,7 +125,7 @@ def log_in():
 @bp.route('/check_token', methods=['GET', 'POST', 'OPTIONS'])
 def check_token_for_pass_reset():
     if request.method == "OPTIONS":
-        return decorators.build_cors_preflight_response()
+        return build_cors_preflight_response()
 
     elif request.method == "POST":
         try:
@@ -209,7 +201,12 @@ def solicit_new_pass():
         user_id = user_dic['_id']
         sent_email = email_helper.send_password_by_mail(email, user_id, token)
 
-        return sent_email
+        return response_with_headers(sent_email)
 
     except Exception as error:
-        raise Exception(error)
+        response = Response(response=json.dumps("update failed:" + str(error)),
+                                              status=401,
+                                              mimetype='application/json')
+        return response
+
+    ## raise excpetion to solve call from another route

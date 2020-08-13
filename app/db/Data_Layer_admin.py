@@ -14,7 +14,12 @@ class DataLayerAdmin(DataLayer):
     def all_users(self):
         try:
             users = self.__db.Users.find()
-            return users
+            all_users_list = []
+
+            for i in users:
+                all_users_list.append(i)
+
+            return all_users_list
         except Exception as e:
             raise Exception('db update failed: {} '.format(str(e)))
 
@@ -73,8 +78,8 @@ class DataLayerAdmin(DataLayer):
         try:
             deleted = self.__db.Users.delete_one({"_id": _id})
             if deleted.deleted_count > 0:
-                users = {"status": 'The user has been deleted!'}
-                return users
+                deleted = {"status": 'The user has been deleted!'}
+                return deleted
             else:
                 raise ValueError('The user is not in the system!')
         except ValueError as error:
