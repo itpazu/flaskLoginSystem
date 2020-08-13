@@ -5,7 +5,9 @@ from app.decorators import Decorators
 from app.email import Email
 import base64
 from app.make_response import build_cors_preflight_response, response_with_headers
+from flask_cors import CORS
 
+CORS(bp, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:3000"}})
 dataLayer = DataLayerProfile()
 decorators = Decorators()
 flask_email = Email()
@@ -13,7 +15,7 @@ flask_email = Email()
 @bp.route('/get_user_info', methods=['GET', 'POST', 'OPTIONS'])
 def get_user_info():
     if request.method == "OPTIONS":
-        return decorators.build_cors_preflight_response()
+        return build_cors_preflight_response()
     elif request.method == "POST":
         try:
             content = request.json
@@ -70,7 +72,7 @@ def delete_photo():
 @bp.route('/edit_account_details', methods=["POST", "OPTIONS"])
 def edit_account_details():
     if request.method == "OPTIONS":
-        return decorators.build_cors_preflight_response()
+        return build_cors_preflight_response()
     elif request.method == "POST":
         try:
             content = request.json

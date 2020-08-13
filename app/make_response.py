@@ -35,10 +35,10 @@ def response_with_token(msg):
 
 def build_cors_preflight_response():
     response = Response(
-        status=200,
+        status='200',
         mimetype='application/json',
         headers={'Access-Control-Allow-Origin': "http://localhost:3000", 'Access-Control-Allow-Credentials': "true",
-                 'Access-Control-Allow-Headers': ["Content-Type", "token"]}
+                 'Access-Control-Allow-Headers': ["Content-Type", "token", "credentials"]}
 
     )
     return response
