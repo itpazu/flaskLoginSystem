@@ -107,7 +107,8 @@ class DataLayerAuth(DataLayerAdmin):
         try:
             store_token = self.__db.Users.find_one_and_update({"_id": user_id}, {"$set": {"token": access_token,
                                                                                           'csrf_token': csrf_token,
-                                                                                          'refresh_token': refresh_token}},
+                                                                                          'refresh_token':
+                                                                                              refresh_token}},
                                                               {"password": 0, "creation_time": 0,
                                                                "last_update_time": 0},
                                                               return_document=ReturnDocument.AFTER)

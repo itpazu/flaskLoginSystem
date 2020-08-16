@@ -5,6 +5,7 @@ from app.decorators import Decorators
 from app.email import Email
 from app.login.login_routes import solicit_new_pass
 from app.make_response import generate_response, response_with_headers
+
 dataLayer = DataLayerAdmin()
 decorators = Decorators()
 flask_email = Email()
@@ -75,10 +76,7 @@ def demote_admin(_id):
     return generate_response(demoted_admin)
 
 
-
 @bp.route('/change_email/<string:_id>', methods=["POST"])
 def change_email(_id):
     changed_email = dataLayer.change_email(_id)
     return generate_response(changed_email)
-
-

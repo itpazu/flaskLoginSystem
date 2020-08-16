@@ -3,7 +3,7 @@ from app.users_profile import bp
 from app.db.Data_Layer_user_profile import DataLayerProfile
 from app.decorators import Decorators
 from app.email import Email
-import base64
+import os
 from app.make_response import build_cors_preflight_response, response_with_headers
 from flask_cors import CORS
 
@@ -11,6 +11,9 @@ CORS(bp, supports_credentials=True, resources={r"/*": {"origins": "http://localh
 dataLayer = DataLayerProfile()
 decorators = Decorators()
 flask_email = Email()
+UPLOAD_FOLDER = "uploads"
+BUCKET = "keepershome-profile-photos"
+
 
 @bp.route('/get_user_info', methods=['GET', 'POST', 'OPTIONS'])
 def get_user_info():
@@ -33,24 +36,27 @@ def get_user_info():
             return json.dumps(e, default=str), 400, {"Content-Type": "application/json"}
 
 
-@bp.route('/add_photo', methods=["POST"])
-def add_photo():
-    try:
-        content = request.json
-        _id = content["_id"]
-        file = request.files['file']
-        with open(file, "rb") as imageFile:
-            string = base64.b64decode(imageFile.read())
-        dataLayer.add_photo(_id, string)
+@bp.route('/upload_file', methods=["GET", "POST", "OPTIONS"])
+def upload_file():
+    if request.method == "OPTIONS":
+        return build_cors_preflight_response()
+    elif request.method == "POST":
+        try:
+            content = request.json
+            _id = content["_id"]
+            f = request.files['file']
+            f.filename = f"{_id}.jpg"
+            f.save(os.path.join(UPLOAD_FOLDER, f.filename))
+            dataLayer.upload_file(_id, f"uploads/{f.filename}", BUCKET)
 
-        response = Response(
-            response=json.dumps(string),
-            status=200,
-            mimetype="application/json"
-        )
-        return response
-    except Exception as e:
-        return json.dumps(e, default=str), 400, {"Content-Type": "application/json"}
+            response = Response(
+                response=json.dumps("photo uploaded successfully!"),
+                status=200,
+                mimetype="application/json"
+            )
+            return response
+        except Exception as e:
+            return json.dumps(e, default=str), 400, {"Content-Type": "application/json"}
 
 
 @bp.route('/delete_photo', methods=["DELETE"])
@@ -58,9 +64,10 @@ def delete_photo():
     try:
         content = request.json
         _id = content["_id"]
-        dataLayer.delete_photo(_id)
+        file_name = f"{_id}.jpg"
+        resp = dataLayer.delete_photo(_id, file_name, BUCKET)
         response = Response(
-            response=json.dumps("The photo was deleted successfully!"),
+            response=json.dumps(resp),
             status=200,
             mimetype="application/json"
         )
@@ -81,6 +88,6 @@ def edit_account_details():
 
         except Exception as error:
             response = Response(response=json.dumps("update failed:" + str(error)),
-                                                  status=401,
-                                                  mimetype='application/json')
+                                status=401,
+                                mimetype='application/json')
             return response
