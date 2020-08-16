@@ -20,7 +20,6 @@ def create_app(config_class=Config):
     mail.init_app(app)
     client.init_app(app, connect=True, authSource="admin", username=os.getenv('DB_USER_NAME'),
                     password=os.getenv('DB_PASSWORD'))
-    CORS(app)
     CORS(app, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:3000"}})
 
     from app.main import bp as main_bp

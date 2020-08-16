@@ -11,6 +11,7 @@ response = ReturnResponse()
 
 
 @bp.route('/get_user_info', methods=['GET', 'POST', 'OPTIONS'])
+@decorators.token_required
 def get_user_info():
     if request.method == "OPTIONS":
         return response.build_cors_preflight_response()
@@ -60,6 +61,7 @@ def delete_photo():
 
 
 @bp.route('/edit_account_details', methods=["POST", "OPTIONS"])
+@decorators.token_required
 def edit_account_details():
     if request.method == "OPTIONS":
         return response.build_cors_preflight_response()
