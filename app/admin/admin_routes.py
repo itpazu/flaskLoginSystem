@@ -82,7 +82,6 @@ def demote_admin(_id):
     except Exception as e:
         return response.error_response((str(e)))
 
-
 @bp.route('/change_email/<string:_id>', methods=["POST"])
 def change_email(_id):
     try:
@@ -90,5 +89,3 @@ def change_email(_id):
         return response.generate_response(changed_email)
     except Exception as e:
         return response.error_response((str(e)))
-
-

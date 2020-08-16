@@ -97,4 +97,3 @@ class Decorators():
             return f(authenticated_user, *args, **kwargs)
 
         return decorated
-

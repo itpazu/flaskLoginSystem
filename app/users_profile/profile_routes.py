@@ -2,12 +2,17 @@ from flask import request
 from app.users_profile import bp
 from app.db.Data_Layer_user_profile import DataLayerProfile
 from app.decorators import Decorators
-import base64
 from app.make_response import ReturnResponse
+from app.email import Email
+import os
+from flask_cors import CORS
 
 dataLayer = DataLayerProfile()
 decorators = Decorators()
 response = ReturnResponse()
+flask_email = Email()
+UPLOAD_FOLDER = "uploads"
+BUCKET = "keepershome-profile-photos"
 
 
 @bp.route('/get_user_info', methods=['GET', 'POST', 'OPTIONS'])
@@ -32,20 +37,23 @@ def get_user_info():
             return response.error_response(str(e), 400)
 
 
-@bp.route('/add_photo', methods=["POST"])
-def add_photo():
-    try:
-        content = request.json
-        _id = content["_id"]
-        file = request.files['file']
-        with open(file, "rb") as imageFile:
-            string = base64.b64decode(imageFile.read())
-        dataLayer.add_photo(_id, string)
+@bp.route('/upload_file', methods=["GET", "POST", "OPTIONS"])
+def upload_file():
+    if request.method == "OPTIONS":
+        return build_cors_preflight_response()
+    elif request.method == "POST":
+        try:
+            content = request.json
+            _id = content["_id"]
+            f = request.files['file']
+            f.filename = f"{_id}.jpg"
+            f.save(os.path.join(UPLOAD_FOLDER, f.filename))
+            dataLayer.upload_file(_id, f"uploads/{f.filename}", BUCKET)
 
-        return response.generate_response(string)
+            return response.generate_response(string)
 
-    except Exception as e:
-        return response.error_response(str(e))
+        except Exception as e:
+            return response.error_response(str(e))
 
 
 @bp.route('/delete_photo', methods=["DELETE"])
@@ -53,9 +61,9 @@ def delete_photo():
     try:
         content = request.json
         _id = content["_id"]
-        dataLayer.delete_photo(_id)
+        file_name = f"{_id}.jpg"
+        dataLayer.delete_photo(_id, file_name, BUCKET)
         return response.generate_response("The photo was deleted successfully!")
-
     except Exception as e:
         return response.error_response(str(e))
 

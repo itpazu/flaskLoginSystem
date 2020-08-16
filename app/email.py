@@ -2,6 +2,8 @@ from flask import current_app
 from flask import json, render_template
 from flask_mail import Message
 from app import mail
+
+
 class Email():
 
     @staticmethod
@@ -30,4 +32,4 @@ class Email():
             raise ValueError("failed to send email {}".format(str(error)))
 
         return {"message": "email to the new user has been sent successfully",
-                                 "user_id": user_id}
+                "user_id": user_id}

@@ -11,6 +11,7 @@ email_helper = Email()
 response = ReturnResponse()
 
 
+
 @bp.route('/refresh_token', methods=['POST', 'GET'])
 @decorators.refresh_token_required
 def refresh_token(user_dic):
@@ -110,6 +111,7 @@ def check_token_for_pass_reset():
             return response.error_response(str(error))
 
 
+
 @bp.route('/change_password', methods=["POST"])
 def change_password():
     try:
@@ -120,6 +122,7 @@ def change_password():
 
     except Exception as error:
         response.error_response(str(error))
+
 
 @bp.route('/newpass_solicit', methods=['GET', 'POST'])
 def solicit_new_pass():
@@ -140,4 +143,3 @@ def solicit_new_pass():
 
     except Exception as error:
         response.error_response(str(error))
-

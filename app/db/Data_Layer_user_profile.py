@@ -1,4 +1,5 @@
 from .Data_Layer_admin import DataLayerAdmin
+from boto3 import client, resource
 
 
 class DataLayerProfile(DataLayerAdmin):
@@ -6,19 +7,25 @@ class DataLayerProfile(DataLayerAdmin):
         super().__init__()
         self.__db = self.get_db()
 
-    def add_photo(self, _id, string):
-        try:
-            add_photo = self.__db.Users.update({"_id": _id}, {"$set": {"photo": string}})
-            return add_photo
-        except Exception as error:
-            raise Exception('failed to add photo' + str(error))
+    def upload_file(self, _id, file_name, bucket):
+        object_name = file_name
+        s3_client = client('s3')
+        response = s3_client.upload_file(file_name, bucket, object_name)
 
-    def delete_photo(self, _id):
-        try:
-            delete_photo = self.__db.Users.update({"_id": _id}, {"$set": {"photo": ""}})
-            return delete_photo
-        except Exception as error:
-            raise Exception('failed to delete photo' + str(error))
+        self.__db.Users.find_one_and_update({"_id": _id},
+                                            {"$set": {"photo": f"https://{bucket}.s3.amazonaws.com/uploads/{file_name}"}
+                                             })
+
+        return response
+
+    def delete_photo(self, _id, file_name, bucket):
+        s3 = resource('s3')
+        obj = s3.Object(bucket, file_name)
+        obj.delete()
+
+        self.__db.Users.find_one_and_update({"_id": _id}, {"$set": {"photo": ""}})
+
+        return 'The photo has been deleted!'
 
     def edit_account_details(self, content):
         _id = content['_id']
