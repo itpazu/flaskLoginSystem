@@ -40,7 +40,7 @@ def get_user_info():
 @bp.route('/upload_file', methods=["GET", "POST", "OPTIONS"])
 def upload_file():
     if request.method == "OPTIONS":
-        return build_cors_preflight_response()
+        return response.build_cors_preflight_response()
     elif request.method == "POST":
         try:
             content = request.json
@@ -50,7 +50,7 @@ def upload_file():
             f.save(os.path.join(UPLOAD_FOLDER, f.filename))
             dataLayer.upload_file(_id, f"uploads/{f.filename}", BUCKET)
 
-            return response.generate_response(string)
+            return response.generate_response('')
 
         except Exception as e:
             return response.error_response(str(e))
