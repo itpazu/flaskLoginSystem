@@ -18,14 +18,14 @@ class Decorators():
                 return reply.build_cors_preflight_response()
             else:
                 try:
-                    content = request.json
-                    cookie = request.cookies  # commented out for development only
-
                     try:
+
+                        content = request.json or request.form
+                        cookie = request.cookies  # commented out for development only
                         csrf_token = request.headers.get('Authorization')
                         # token = request.headers.get('token')  # for dev only
                         token = cookie.get('token')
-                        user_id = content['_id']
+                        user_id = content.get('_id')
                     except Exception as error:
                         raise Exception('{} data is missing in the request'.format(str(error)))
 
@@ -83,7 +83,7 @@ class Decorators():
                 cookie = request.cookies  # commented out for development only
 
                 try:
-                    ref_token = request.headers.get('refresh_token')  ##for dev only
+                    # ref_token = request.headers.get('refresh_token')  ##for dev only
                     ref_token = cookie.get('refresh_token')
                     user_id = content['_id']
                 except Exception as error:

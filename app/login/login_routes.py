@@ -26,8 +26,8 @@ def refresh_token(user_dic):
 
 
 @bp.route('/test', methods=['POST', 'GET'])  # for development- testing tokens
-# @decorators.token_required
-@decorators.admin_required
+@decorators.token_required
+# @decorators.admin_required
 def test_route():
     return response.generate_response("test succeeded")
 

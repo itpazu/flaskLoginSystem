@@ -42,7 +42,7 @@ class DataLayerAdmin(DataLayer):
 
     def get_doc_by_user_id(self, user_id):
         try:
-            user_dict = self.__db.Users.find_one({"_id": user_id})
+            user_dict = self.__db.Users.find_one({"_id": user_id}, {"password": 0, "creation_time": 0, "csrf_token": 0})
 
             if user_dict:
                 return user_dict
