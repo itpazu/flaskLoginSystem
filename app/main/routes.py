@@ -14,14 +14,26 @@ def health_check_aws():
 @bp.route('/get_costumer/<str:email>', methods=['GET'])
 def get_costumer_by_mail(email):
     try:
-        current_status = requests.get("path_to_api/email")
+        current_status = requests.get("path_to_api/" + f"{email}")
         return response.generate_response(current_status)
     except Exception as error:
         return response.error_response(str(error))
 
-    # path: / admin / fixed - vip / {user_id}?end =
 
 @bp.route('/change_vip_status/<int:user_id>', methods=['UPDATE'])
 def change_vip_status(user_id):
-    milliseconds = int(time() * 1000)
-    change_status = requests.get("stage-api.keeperschildsafety.net/admin/fixed-vip/" + user_id + f'''?end={milliseconds}''')
+    try:
+        url= "stage-api.keeperschildsafety.net/admin/fixed-vip/" + user_id
+        milliseconds = int(time() * 1000)
+        payload = {"end": milliseconds}
+        headers = {"String Auth-Token": ""}
+        change_status = requests.put(url, params=payload, headers=headers)
+        costumer_details = change_status.json()
+        if costumer_details is not None:
+            return response.generate_response(costumer_details)
+        raise Exception(response.error_response("not found"))
+    except Exception as error:
+        response.error_response(str(error))
+
+
+
