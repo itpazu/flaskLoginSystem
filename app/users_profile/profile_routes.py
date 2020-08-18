@@ -22,7 +22,7 @@ def get_user_info():
             content = request.json
             _id = content['_id']
             selected_user = dataLayer.get_doc_by_user_id(_id)
-            keys = ["_id", "role", "first_name", "last_name", "email", "photo"]
+            keys = ["_id", "role", "first_name", "last_name", "email"]
             new_dic = {key: selected_user[key] for key in keys}
 
             return response.response_with_headers(new_dic)
