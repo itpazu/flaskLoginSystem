@@ -11,7 +11,6 @@ email_helper = Email()
 response = ReturnResponse()
 
 
-
 @bp.route('/refresh_token', methods=['POST', 'GET'])
 @decorators.refresh_token_required
 def refresh_token(user_dic):
@@ -56,12 +55,9 @@ def log_in():
                 dataLayer.delete_email_attempts(email)
                 keys = ["_id", "role", "first_name", "last_name", "email", "photo"]
                 new_dic = {key: execute_login[key] for key in keys}
-                if new_dic["photo"] != '':
-                    new_photo = new_dic["photo"].decode()
-                    new_dic["photo"] = new_photo
 
                 return response.response_with_token(new_dic, execute_login["token"], execute_login["refresh_token"],
-                                           execute_login["csrf_token"])
+                                                    execute_login["csrf_token"])
 
             else:
                 failed_email = dataLayer.log_attempt(email)
@@ -109,7 +105,6 @@ def check_token_for_pass_reset():
             return response.generate_response('token approved')
         except Exception as error:
             return response.error_response(str(error))
-
 
 
 @bp.route('/change_password', methods=["POST"])

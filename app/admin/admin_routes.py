@@ -11,6 +11,7 @@ decorators = Decorators()
 email_helper = Email()
 response = ReturnResponse()
 
+
 @bp.route('/all_users', methods=['GET', 'POST'])
 @decorators.admin_required
 def all_users():
@@ -20,7 +21,6 @@ def all_users():
 
     except Exception as error:
         return response.error_response(str(error))
-
 
 
 @bp.route('/add_user', methods=["POST"])
@@ -81,6 +81,7 @@ def demote_admin(_id):
 
     except Exception as e:
         return response.error_response((str(e)))
+
 
 @bp.route('/change_email/<string:_id>', methods=["POST"])
 def change_email(_id):

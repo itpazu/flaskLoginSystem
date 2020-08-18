@@ -4,14 +4,11 @@ from app.db.Data_Layer_user_profile import DataLayerProfile
 from app.decorators import Decorators
 from app.make_response import ReturnResponse
 from app.email import Email
-import os
-from flask_cors import CORS
 
 dataLayer = DataLayerProfile()
 decorators = Decorators()
 response = ReturnResponse()
 flask_email = Email()
-UPLOAD_FOLDER = "uploads"
 BUCKET = "keepershome-profile-photos"
 
 
@@ -27,9 +24,6 @@ def get_user_info():
             selected_user = dataLayer.get_doc_by_user_id(_id)
             keys = ["_id", "role", "first_name", "last_name", "email", "photo"]
             new_dic = {key: selected_user[key] for key in keys}
-            if new_dic["photo"] != '':
-                new_photo = new_dic["photo"].decode()
-                new_dic["photo"] = new_photo
 
             return response.response_with_headers(new_dic)
 
@@ -37,20 +31,17 @@ def get_user_info():
             return response.error_response(str(e), 400)
 
 
-@bp.route('/upload_file', methods=["GET", "POST", "OPTIONS"])
+@bp.route('/upload_file', methods=["POST", "OPTIONS"])
 def upload_file():
     if request.method == "OPTIONS":
-        return build_cors_preflight_response()
+        return response.build_cors_preflight_response()
     elif request.method == "POST":
         try:
-            content = request.json
-            _id = content["_id"]
+            _id = request.form['_id']
             f = request.files['file']
-            f.filename = f"{_id}.jpg"
-            f.save(os.path.join(UPLOAD_FOLDER, f.filename))
-            dataLayer.upload_file(_id, f"uploads/{f.filename}", BUCKET)
+            dataLayer.upload_file(_id, f, BUCKET)
 
-            return response.generate_response(string)
+            return response.generate_response("The photo was uploaded successfully!")
 
         except Exception as e:
             return response.error_response(str(e))
@@ -61,8 +52,7 @@ def delete_photo():
     try:
         content = request.json
         _id = content["_id"]
-        file_name = f"{_id}.jpg"
-        dataLayer.delete_photo(_id, file_name, BUCKET)
+        dataLayer.delete_photo(_id, BUCKET)
         return response.generate_response("The photo was deleted successfully!")
     except Exception as e:
         return response.error_response(str(e))

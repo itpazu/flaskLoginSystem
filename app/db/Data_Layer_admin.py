@@ -57,7 +57,6 @@ class DataLayerAdmin(DataLayer):
             last_name = content['last_name']
             email = content['email']
             role = content['role']
-            photo = ''
             user_id = generate_id()
             check_if_user_exists = self.__db.Users.find_one({"$or": [{"email": email}, {"_id": user_id}]})
             if check_if_user_exists is not None:
@@ -65,7 +64,7 @@ class DataLayerAdmin(DataLayer):
             else:
                 password = self.encrypt_pass(secrets.token_hex())
                 token = encode_token(user_id, password, role)
-                new_user = User(user_id, last_name, first_name, email, password, role, photo, token)
+                new_user = User(user_id, last_name, first_name, email, password, role, token)
                 self.__db.Users.insert_one(new_user.__dict__)
                 added_user = self.get_doc_by_email(email)
                 return added_user
