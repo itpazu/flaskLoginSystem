@@ -22,10 +22,7 @@ def get_user_info():
             content = request.json
             _id = content['_id']
             selected_user = dataLayer.get_doc_by_user_id(_id)
-            if 'photo' in selected_user.keys():
-                keys = ["_id", "role", "first_name", "last_name", "email", "photo"]
-            else:
-                keys = ["_id", "role", "first_name", "last_name", "email"]
+            keys= selected_user.keys()
             new_dic = {key: selected_user[key] for key in keys}
 
             return response.response_with_headers(new_dic)
@@ -35,6 +32,7 @@ def get_user_info():
 
 
 @bp.route('/upload_file', methods=["POST", "OPTIONS"])
+@decorators.token_required
 def upload_file():
     if request.method == "OPTIONS":
         return response.build_cors_preflight_response()
@@ -51,6 +49,7 @@ def upload_file():
 
 
 @bp.route('/delete_photo', methods=["DELETE"])
+@decorators.token_required
 def delete_photo():
     try:
         content = request.json

@@ -11,8 +11,8 @@ response = ReturnResponse()
 def health_check_aws():
     return 'success', 200, {"Content-Type": "application/json"}
 
-@bp.route('/get_costumer/<str:email>', methods=['GET'])
-def get_costumer_by_mail(email):
+@bp.route('/get_customer/<string:email>', methods=['GET'])
+def get_customer_by_mail(email):
     try:
         current_status = requests.get("path_to_api/" + f"{email}")
         return response.generate_response(current_status)

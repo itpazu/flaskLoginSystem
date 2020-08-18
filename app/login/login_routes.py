@@ -53,10 +53,7 @@ def log_in():
             if execute_login:
                 # dataLayer.delete_ip_attempts(ip_address)
                 dataLayer.delete_email_attempts(email)
-                if 'photo' in execute_login.keys():
-                    keys = ["_id", "role", "first_name", "last_name", "email", "photo"]
-                else:
-                    keys = ["_id", "role", "first_name", "last_name", "email"]
+                keys =  execute_login.keys()
                 new_dic = {key: execute_login[key] for key in keys}
 
                 return response.response_with_token(new_dic, execute_login["token"], execute_login["refresh_token"],
