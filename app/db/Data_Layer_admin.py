@@ -4,12 +4,10 @@ from .Data_Layer import DataLayer
 from app.models.user import User
 import secrets
 
-
 class DataLayerAdmin(DataLayer):
     def __init__(self):
         super().__init__()
         self.__db = self.get_db()
-        # print(help(DataLayer_auth))
 
     def all_users(self):
         try:
@@ -42,7 +40,7 @@ class DataLayerAdmin(DataLayer):
 
     def get_doc_by_user_id(self, user_id):
         try:
-            user_dict = self.__db.Users.find_one({"_id": user_id}, {"password": 0, "creation_time": 0, "csrf_token": 0})
+            user_dict = self.__db.Users.find_one({"_id": user_id}, {"creation_time": 0})
 
             if user_dict:
                 return user_dict
@@ -51,8 +49,9 @@ class DataLayerAdmin(DataLayer):
         except Exception as error:
             raise Exception(str(error))
 
-    def add_user(self, content):
+    def add_user(self, content, conf=None):
         try:
+
             first_name = content['first_name']
             last_name = content['last_name']
             email = content['email']
@@ -62,10 +61,11 @@ class DataLayerAdmin(DataLayer):
             if check_if_user_exists is not None:
                 raise ValueError('user already exists!')
             else:
-                password = self.encrypt_pass(secrets.token_hex())
+                password = self.encrypt_pass(secrets.token_hex()) if conf is None else self.encrypt_pass('12345678')
                 token = encode_token(user_id, password, role)
                 new_user = User(user_id, last_name, first_name, email, password, role, token)
                 self.__db.Users.insert_one(new_user.__dict__)
+
                 added_user = self.get_doc_by_email(email)
                 return added_user
         except Exception as error:

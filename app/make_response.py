@@ -26,7 +26,9 @@ class ReturnResponse:
 
     @staticmethod
     def response_with_token(msg, token, fresh_token, csrf_token=None):
+        print(msg)
         response = Response(
+
             response=json.dumps(msg, default=str),
             status=200,
             mimetype='application/json',
@@ -54,7 +56,7 @@ class ReturnResponse:
     @staticmethod
     def build_cors_preflight_response():
         response = Response(
-            status='200',
+            status=200,
             mimetype='application/json',
             headers={'Access-Control-Allow-Origin': "http://localhost:3000", 'Access-Control-Allow-Credentials': "true",
                      'Access-Control-Allow-Headers': ["Content-Type", "token", "credentials", "authorization"]}

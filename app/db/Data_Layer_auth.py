@@ -12,7 +12,6 @@ class DataLayerAuth(DataLayerAdmin):
         self.__db = self.get_db()
 
     def log_user(self, email, password):
-
         verify_user_exists = self.get_doc_by_email(email)
         if verify_user_exists is None:
             raise ValueError('email does not exist in db')

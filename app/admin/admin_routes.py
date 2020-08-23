@@ -1,4 +1,4 @@
-from flask import request
+from flask import request, current_app
 from app.admin import bp
 from app.db.Data_Layer_admin import DataLayerAdmin
 from app.decorators import Decorators
@@ -24,14 +24,16 @@ def all_users():
 
 
 @bp.route('/add_user', methods=["POST"])
-@decorators.admin_required
+# @decorators.admin_required
 def add_user():
     try:
         content = request.json
-        added_user = dataLayer.add_user(content)
+        added_user = dataLayer.add_user(content, current_app.config['ENV']) if current_app.config['TESTING'] else\
+            dataLayer.add_user(content)
         email_address = added_user['email']
         user_id = added_user['_id']
         token = added_user['token']
+
         sent_mail = email_helper.send_password_by_mail(email_address, user_id, token)
 
         return response.response_with_headers(sent_mail)

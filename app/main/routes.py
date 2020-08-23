@@ -1,5 +1,4 @@
 from app.main import bp
-from flask import request
 import requests
 from app.make_response import ReturnResponse
 from app.decorators import Decorators
@@ -12,10 +11,15 @@ def health_check_aws():
     return 'success', 200, {"Content-Type": "application/json"}
 
 @bp.route('/get_customer/<string:email>', methods=['GET'])
+@decorators.token_required
 def get_customer_by_mail(email):
     try:
-        current_status = requests.get("path_to_api/" + f"{email}")
-        return response.generate_response(current_status)
+        headers = {"Auth-Token" : "c95ddcc4-ad89-45a0-bcbe-3c10eb620f640147fa5e-c25d-4b65-abf1-071820fb1270"}
+        url = "https://stage-api.keeperschildsafety.net/admin/user-by-email/?email={}".format(email)
+        current_status = requests.get(url,
+                                      headers=headers)
+        msg = current_status.json()
+        return response.generate_response(msg)
     except Exception as error:
         return response.error_response(str(error))
 

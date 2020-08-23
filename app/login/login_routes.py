@@ -39,7 +39,7 @@ def log_in():
     elif request.method == "POST":
         try:
             content = request.json
-            ip_address = request.remote_addr
+            # ip_address = request.remote_addr
 
             try:
                 email = content['email']
@@ -53,8 +53,9 @@ def log_in():
             if execute_login:
                 # dataLayer.delete_ip_attempts(ip_address)
                 dataLayer.delete_email_attempts(email)
-                keys =  execute_login.keys()
-                new_dic = {key: execute_login[key] for key in keys}
+                keys = execute_login.keys()
+                new_dic = {key: execute_login[key] for key in keys if key != "token" and key != "refresh_token" and
+                           key != "csrf_token"}
 
                 return response.response_with_token(new_dic, execute_login["token"], execute_login["refresh_token"],
                                                     execute_login["csrf_token"])

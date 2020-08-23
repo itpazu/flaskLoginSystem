@@ -1,26 +1,31 @@
 from flask import Flask
-from config import Config
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail
 from flask_cors import CORS
 import os
-from dotenv import load_dotenv
 from flask_pymongo import PyMongo
+from config import Config
 import boto3
 
-load_dotenv()
+
+# load_dotenv()
 bcrypt = Bcrypt()
 mail = Mail()
 client = PyMongo()
 
-
-def create_app(config_class=Config):
+def create_app(config_class= Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     bcrypt.init_app(app)
     mail.init_app(app)
-    client.init_app(app, connect=True, authSource="admin", username=os.getenv('DB_USER_NAME'),
-                    password=os.getenv('DB_PASSWORD'))
+    if app.config['ENV'] == 'development':
+
+        client.init_app(app, connect=True, authSource="admin", username=os.getenv('DB_USER_NAME'),
+                        password=os.getenv('DB_PASSWORD'))
+    else:
+        client.init_app(app, connect=True, authSource="admin", username='keeperHomeTester',
+                        password='flasktests12345')
+
     CORS(app, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:3000"}})
 
     from app.main import bp as main_bp

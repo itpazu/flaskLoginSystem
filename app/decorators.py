@@ -21,10 +21,9 @@ class Decorators():
                     try:
 
                         content = request.json or request.form
-                        cookie = request.cookies  # commented out for development only
+                        cookie = request.cookies
                         csrf_token = request.headers.get('Authorization')
-                        # token = request.headers.get('token')  # for dev only
-                        token = cookie.get('token')
+                        token = cookie.get('token') or request.headers.get('token')
                         user_id = content.get('_id')
                     except Exception as error:
                         raise Exception('{} data is missing in the request'.format(str(error)))
@@ -51,10 +50,8 @@ class Decorators():
                     try:
                         content = request.json
                         csrf_token = request.headers.get('Authorization')
-
-                        cookie = request.cookies  # commented out for development only
-                        token = cookie.get('token')
-                        # token = request.headers.get('token') ## dev only
+                        cookie = request.cookies
+                        token = cookie.get('token') or request.headers.get('token')
                         user_id = content['_id']
 
                     except Exception as error:
@@ -80,11 +77,10 @@ class Decorators():
         def decorated(*args, **kwargs):
             try:
                 content = request.json
-                cookie = request.cookies  # commented out for development only
+                cookie = request.cookies
 
                 try:
-                    # ref_token = request.headers.get('refresh_token')  ##for dev only
-                    ref_token = cookie.get('refresh_token')
+                    ref_token = cookie.get('refresh_token') or request.headers.get('refresh_token')
                     user_id = content['_id']
                 except Exception as error:
                     raise ValueError('{} data is missing in the request'.format(str(error)))

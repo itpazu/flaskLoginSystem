@@ -39,7 +39,7 @@ class DataLayerProfile(DataLayerAdmin):
             if item['Key'].startswith(f"uploads/{_id}"):
                 s3_client.delete_object(Bucket=bucket, Key=item['Key'])
 
-        self.__db.Users.find_one_and_update({"_id": _id}, {"$set": {"photo": ""}})
+        self.__db.Users.find_one_and_update({"_id": _id}, {"$unset": {"photo": ""}})
 
         return 'The photo has been deleted!'
 

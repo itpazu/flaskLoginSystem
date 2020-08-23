@@ -1,11 +1,11 @@
 from app import client
 from app import bcrypt
 
-
 class DataLayer():
     def __init__(self):
         self.bcrypt = bcrypt
         self.__db = client.db
+        # print(self.__db.list_collection_names())
 
     def get_db(self):
         return self.__db
