@@ -20,7 +20,7 @@ class Decorators():
                 try:
                     try:
 
-                        content = request.json or request.form
+                        content = request.json or request.form or request.args
                         cookie = request.cookies
                         csrf_token = request.headers.get('Authorization')
                         token = cookie.get('token') or request.headers.get('token')
@@ -48,7 +48,7 @@ class Decorators():
             else:
                 try:
                     try:
-                        content = request.json
+                        content = request.json or request.form or request.args
                         csrf_token = request.headers.get('Authorization')
                         cookie = request.cookies
                         token = cookie.get('token') or request.headers.get('token')

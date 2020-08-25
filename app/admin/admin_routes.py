@@ -24,7 +24,7 @@ def all_users():
 
 
 @bp.route('/add_user', methods=["POST"])
-# @decorators.admin_required
+@decorators.admin_required
 def add_user():
     try:
         content = request.json

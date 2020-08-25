@@ -59,7 +59,8 @@ class ReturnResponse:
             status=200,
             mimetype='application/json',
             headers={'Access-Control-Allow-Origin': "http://localhost:3000", 'Access-Control-Allow-Credentials': "true",
-                     'Access-Control-Allow-Headers': ["Content-Type", "token", "credentials", "authorization"]}
+                     'Access-Control-Allow-Headers': ["Content-Type", "token", "credentials", "authorization"],
+                     'Access-Control-Allow-Methods': '*'}
 
         )
         return response
