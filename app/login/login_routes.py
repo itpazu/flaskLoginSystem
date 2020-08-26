@@ -25,10 +25,11 @@ def refresh_token(user_dic):
         return response.error_response(str(error))
 
 
-@bp.route('/test', methods=['POST', 'GET'])  # for development- testing tokens
+@bp.route('/test', methods=['POST', 'GET'])  # base case => decorators -> dl auth ## baseCase - > login route -> dl=auth
 @decorators.token_required
 # @decorators.admin_required
 def test_route():
+    print('in login route tests')
     return response.generate_response("test succeeded")
 
 

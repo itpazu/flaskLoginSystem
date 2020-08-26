@@ -19,7 +19,7 @@ class Decorators():
             else:
                 try:
                     try:
-
+                        print('in token required decorators')
                         content = request.json or request.form or request.args
                         cookie = request.cookies
                         csrf_token = request.headers.get('Authorization')

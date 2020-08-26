@@ -26,7 +26,6 @@ class ReturnResponse:
 
     @staticmethod
     def response_with_token(msg, token, fresh_token, csrf_token=None):
-        print(msg)
         response = Response(
 
             response=json.dumps(msg, default=str),

@@ -10,6 +10,7 @@ class DataLayerAuth(DataLayerAdmin):
     def __init__(self):
         super().__init__()
         self.__db = self.get_db()
+        # print(self.__db)
 
     def log_user(self, email, password):
         verify_user_exists = self.get_doc_by_email(email)
@@ -29,7 +30,6 @@ class DataLayerAuth(DataLayerAdmin):
                 return user_dic
 
     def authenticate_user(self, user_id, token, csrf_token=None):
-
         user_from_db = self.get_doc_by_user_id(user_id)
         if user_from_db is None:
             raise ValueError('identification failed, user_id is either missing or incorrect')

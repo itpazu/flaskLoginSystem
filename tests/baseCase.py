@@ -2,21 +2,29 @@ import unittest
 import json
 from app import create_app
 from config_tests import ConfigTests
+from app.decorators import Decorators
+from functools import wraps
 from app.db.Data_Layer import DataLayer
+
+
+
+
+def mock_decorator(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        return f(*args, **kwargs)
+    return decorated_function
+
+Decorators.admin_required = staticmethod(mock_decorator)
+# Decorators.token_required = staticmethod(mock_decorator)
 
 
 class BaseTestCase(unittest.TestCase):
 
     def setUp(self):
         self.app = create_app(ConfigTests)
-        self.app_context = self.app.app_context()
-        self.app_context.push()
         self.db = DataLayer().get_db()
         self.tester = self.app.test_client()
-        self.token = ''
-        self.csrf = ''
-        self.fresh_token = ''
-
 
 
     def test_a_sign_up(self):
@@ -44,14 +52,15 @@ class BaseTestCase(unittest.TestCase):
             "role": "user",
         })
         # when
-        sign_up_resp = self.tester.post('/add_user', headers={"content-Type": "application/json"}, data=sign_payload)
-
+        res = self.tester.post('/add_user', headers={"content-Type": "application/json"}, data=sign_payload)
+        generated_id = res.json['user_id']
         payload = json.dumps({"email": "kocefaw248@acceptmail.net", "password": "12345678"})
         response = self.tester.post('/login', headers={"content-Type": "application/json"}, data=payload)
-
-        print(response.json)
-        print(response.headers)
+        login_id = response.json['_id']
         self.assertEqual('200 OK', response.status)
+        self.assertEqual(generated_id, login_id)
+
+
 
     def tearDown(self):
         # print('in teardown')
