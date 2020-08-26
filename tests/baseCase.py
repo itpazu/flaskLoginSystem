@@ -15,8 +15,9 @@ def mock_decorator(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# circumvent the decorators
 Decorators.admin_required = staticmethod(mock_decorator)
-# Decorators.token_required = staticmethod(mock_decorator)
+Decorators.token_required = staticmethod(mock_decorator)
 
 
 class BaseTestCase(unittest.TestCase):
@@ -28,30 +29,25 @@ class BaseTestCase(unittest.TestCase):
 
 
     def test_a_sign_up(self):
-        # print('in sign up')
-        # Given
+
         payload = json.dumps({
             "last_name": "bisli",
             "first_name": "dala",
             "email": "kocefaw248@acceptmail.net",
             "role": "user",
         })
-        # when
         response = self.tester.post('/add_user', headers={"content-Type": "application/json"}, data=payload)
 
-        # then
         self.assertEqual(int, type(int(response.json['user_id'])))
         self.assertEqual('200 OK', response.status)
 
     def test_b_login(self):
-        # print('login')
         sign_payload = json.dumps({
             "last_name": "bisli",
             "first_name": "dala",
             "email": "kocefaw248@acceptmail.net",
             "role": "user",
         })
-        # when
         res = self.tester.post('/add_user', headers={"content-Type": "application/json"}, data=sign_payload)
         generated_id = res.json['user_id']
         payload = json.dumps({"email": "kocefaw248@acceptmail.net", "password": "12345678"})
@@ -63,7 +59,6 @@ class BaseTestCase(unittest.TestCase):
 
 
     def tearDown(self):
-        # print('in teardown')
         for collection in self.db.list_collection_names():
             self.db.drop_collection(collection)
 
