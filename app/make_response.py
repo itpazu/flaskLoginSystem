@@ -1,6 +1,5 @@
-from flask import json, request, Response
+from flask import json, Response
 from datetime import datetime, timedelta
-
 
 class ReturnResponse:
 
@@ -19,7 +18,7 @@ class ReturnResponse:
             response=json.dumps(msg, default=str),
             status=200,
             mimetype='application/json',
-            headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+            headers={'Access-Control-Allow-Origin': 'http://keepershomeclient.s3-website.eu-central-1.amazonaws.com',
                      'Access-Control-Allow-Credentials': "true",
                      'Access-Control-Allow-Headers': "Content-Type",
                      })
@@ -31,7 +30,7 @@ class ReturnResponse:
             response=json.dumps(msg, default=str),
             status=200,
             mimetype='application/json',
-            headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+            headers={'Access-Control-Allow-Origin': 'http://keepershomeclient.s3-website.eu-central-1.amazonaws.com',
                      'Access-Control-Allow-Credentials': "true",
                      'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
                      'Access-Control-Expose-Headers': ["Authorization"],
@@ -57,7 +56,8 @@ class ReturnResponse:
         response = Response(
             status=200,
             mimetype='application/json',
-            headers={'Access-Control-Allow-Origin': "http://localhost:3000", 'Access-Control-Allow-Credentials': "true",
+            headers={'Access-Control-Allow-Origin': 'http://keepershomeclient.s3-website.eu-central-1.amazonaws.com',
+                     'Access-Control-Allow-Credentials': "true",
                      'Access-Control-Allow-Headers': ["Content-Type", "token", "credentials", "authorization"],
                      'Access-Control-Allow-Methods': '*'}
 

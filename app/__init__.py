@@ -5,7 +5,7 @@ from flask_cors import CORS
 import os
 from flask_pymongo import PyMongo
 from config import Config
-import boto3
+# import boto3
 
 
 # load_dotenv()
@@ -26,7 +26,8 @@ def create_app(config_class= Config):
         client.init_app(app, connect=True, authSource="admin", username='keeperHomeTester',
                         password='flasktests12345')
 
-    CORS(app, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:3000"}})
+    CORS(app, supports_credentials=True, resources={r"/*":
+                                                        {"origins":  ["http://keepershomeclient.s3-website.eu-central-1.amazonaws.com", "http://localhost:3000"]}})
 
     from app.main import bp as main_bp
     app.register_blueprint(main_bp)

@@ -79,7 +79,7 @@ def log_in():
                     except Exception as error:
                         raise Exception(str(error))
                     raise Exception("user is blocked")
-                elif failed_email["attempts"] > 10 and failed_email["attempts"] % 5:
+                elif failed_email["attempts"] > 10 and failed_email["attempts"] % 5 == 0:
                     dataLayer.block_current_password(email)
                     raise Exception("user is blocked. Turn to your main")
                 else:

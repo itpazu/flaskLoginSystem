@@ -155,11 +155,12 @@ class DataLayerAdmin(DataLayer):
                 password = self.encrypt_pass(secrets.token_hex())
                 self.__db.Users.find_one_and_update({"email": email}, {"$set": {"password": password,
                                                                                 "last_update_time": User.updated_at()}})
+            else:
 
-            password = self.encrypt_pass(secrets.token_hex())
-            self.__db.Users.find_one_and_update({"email": email}, {"$set": {"password": password,
-                                                                            "last_update_time": User.updated_at(),
-                                                                            "blocked": True}},
-                                                upsert=True)
+                password = self.encrypt_pass(secrets.token_hex())
+                self.__db.Users.find_one_and_update({"email": email}, {"$set": {"password": password,
+                                                                                "last_update_time": User.updated_at(),
+                                                                                "blocked": True}},
+                                                    upsert=True)
         except Exception as error:
             raise error
