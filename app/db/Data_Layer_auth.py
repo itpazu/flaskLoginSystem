@@ -87,14 +87,15 @@ class DataLayerAuth(DataLayerAdmin):
             attempts = self.get_attempts(email)
 
             if attempts is not None and attempts["attempts"] >= 10:
-                raise Exception('user is blocked. Turn to an admin')
+                raise Exception({"message": "password could not be reset. turn to an admin",
+                                 "log": "user %s is blocked due to  %d unsuccessful login attempts"
+                                        % (email, attempts["attempts"]), "status_code": 401})
 
             password = user_dic['password']
             user_id = user_dic['_id']
             role = user_dic['role']
 
             reset_token = encode_token(user_id, password, role)
-
             new_user_dic = self.store_reset_token(user_id, reset_token)
 
             return new_user_dic

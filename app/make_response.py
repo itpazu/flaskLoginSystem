@@ -1,6 +1,6 @@
-from flask import json, request, Response
+from flask import json, Response
 from datetime import datetime, timedelta
-
+from app.error_handler import ClientError
 
 class ReturnResponse:
 
@@ -49,8 +49,17 @@ class ReturnResponse:
         return response
 
     @staticmethod
-    def error_response(error, status=400):
-        return Response(response=json.dumps(error), status=status, mimetype='application/json')
+    def error_response(error, path):
+        if error.args:
+            err = error.args[0]['message'] if "message" in error.args[0] else error
+            log = error.args[0]['log'] if 'log' in error.args[0] else None
+            status = error.args[0]['status_code'] if 'status_code' in error.args[0] else None
+        else:
+            err = error
+            status = None
+            log = None
+        raise ClientError(str(err), path, status_code=status, log=log)
+        # return Response(response=json.dumps(error), status=status, mimetype='application/json')
 
     @staticmethod
     def build_cors_preflight_response():
@@ -64,4 +73,11 @@ class ReturnResponse:
         )
         return response
 
+
+    @staticmethod
+    def log_error(message, path):
+        try:
+            ClientError.log_error(message, path)
+        except Exception:
+            pass
 

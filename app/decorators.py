@@ -1,6 +1,5 @@
 from app.db.Data_Layer_auth import DataLayerAuth
 from functools import wraps
-from flask import request
 from app.make_response import ReturnResponse
 from flask import request
 
@@ -19,7 +18,6 @@ class Decorators():
             else:
                 try:
                     try:
-                        print('in token required decorators')
                         content = request.json or request.form or request.args
                         cookie = request.cookies
                         csrf_token = request.headers.get('Authorization')
@@ -32,8 +30,13 @@ class Decorators():
 
                 except Exception as err:
                     if str(err) == 'Signature expired':
-                        return reply.error_response("signature expired", 403)
-                    return reply.error_response("authentication failed:" + str(err), 401)
+                        print('inside')
+                        raise Exception({"message": "authentication failed", "log": "signature expired",
+                                                     "status_code": 403})
+                    else:
+                        raise Exception({"log": "authentication failed " + str(err), "status_code": 401})
+                except Exception as error:
+                    return reply.error_response(error, request.path)
 
                 return f(*args, **kwargs)
 

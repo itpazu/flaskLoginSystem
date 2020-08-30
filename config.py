@@ -15,5 +15,5 @@ class Config(object):
     MAIL_USE_TLS = False
     MAIL_USE_SSL = True
     MAIL_DEFAULT_SENDER = ('KeepersHome', os.getenv('EMAIL'))
-    TESTING = False
-    ENV = 'development'
+    ENV = os.getenv('ENV')
+    TESTING= False

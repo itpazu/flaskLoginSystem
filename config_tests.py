@@ -9,6 +9,6 @@ class ConfigTests(Config):
     MAIL_DEFAULT_SENDER = ('KeepersHome- tests', os.getenv('EMAIL'))
     ENV = 'testing'
     TESTING = True
-    DEBUG=True
+    DEBUG= True
 
 

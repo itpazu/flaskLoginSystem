@@ -28,7 +28,9 @@ class Email():
                                        url=url)
             mail.send(msg)
         except Exception as error:
-            raise ValueError("failed to send email {}".format(str(error)))
+            raise Exception({"message": "request failed turn to your admin",
+                             "log": " password reset for user %s failed. Email could not be sent. reason: %s"
+                                    % (email_address, (str(error))), "status_code": 401})
 
         return {"message": "email to the new user has been sent successfully",
                 "user_id": user_id}
