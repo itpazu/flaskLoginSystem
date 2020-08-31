@@ -27,11 +27,11 @@ def refresh_token(user_dic):
 
 
 @bp.route('/test', methods=['POST', 'GET'])
-@decorators.token_required
-# @decorators.admin_required
+# @decorators.token_required
+@decorators.admin_required
 def test_route():
 
-    return 200, 'success'
+    return 'success', 200
     # raise ClientError('log this to log file', request.path , status_code=410, message='show this to client')
 
 
