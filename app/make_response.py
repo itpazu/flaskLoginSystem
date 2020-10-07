@@ -34,7 +34,7 @@ class ReturnResponse:
             headers={'Access-Control-Allow-Origin': "http://localhost:3000",
                      'Access-Control-Allow-Credentials': "true",
                      'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
-                     'Access-Control-Expose-Headers': "Authorization", ## localserver
+                     # 'Access-Control-Expose-Headers': "Authorization", ## localserver
                      "Authorization": csrf_token if csrf_token is not None else None,
 
 
@@ -69,8 +69,7 @@ class ReturnResponse:
             status=200,
             mimetype='application/json',
             headers={'Access-Control-Allow-Origin': "http://localhost:3000", 'Access-Control-Allow-Credentials': "true",
-                     'Access-Control-Allow-Headers': ["Content-Type", "token", "credentials", "authorization",
-                                                      "refresh_token"],
+                     'Access-Control-Allow-Headers': ["Content-Type", "credentials", "authorization"],
                      'Access-Control-Allow-Methods': '*'}
 
         )
