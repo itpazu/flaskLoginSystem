@@ -34,18 +34,18 @@ class ReturnResponse:
             headers={'Access-Control-Allow-Origin': "http://localhost:3000",
                      'Access-Control-Allow-Credentials': "true",
                      'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
-                     # 'Access-Control-Expose-Headers': "Authorization", ## localserver
+                     'Access-Control-Expose-Headers': "Authorization", ## localserver
                      "Authorization": csrf_token if csrf_token is not None else None,
 
 
                      })
 
         response.set_cookie('token', value=token, httponly=True,
-                            domain='hogwarts-itpazu.herokuapp.com/',
+                            domain='hogwarts-itpazu.herokuapp.com',
                             path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
                             samesite='none')
         response.set_cookie('refresh_token', value=fresh_token, httponly=True,
-                            domain='hogwarts-itpazu.herokuapp.com/',
+                            domain='hogwarts-itpazu.herokuapp.com',
                             path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
                             samesite='none')
         return response
