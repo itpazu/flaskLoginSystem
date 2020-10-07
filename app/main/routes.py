@@ -54,7 +54,7 @@ def change_vip_status():
         return response.error_response(error, request.path)
 
 @bp.route('/add_student', methods=['GET', 'POST', 'OPTIONS'])
-# @decorators.token_required
+@decorators.token_required
 def add_new_student():
     if request.method == "OPTIONS":
         return response.build_cors_preflight_response()
@@ -73,7 +73,7 @@ def add_new_student():
 
 
 @bp.route('/students',  methods=['GET'])
-# @decorators.token_required
+@decorators.token_required
 def load_students():
     try:
         load = data_layer.all_users('Students')
@@ -82,6 +82,7 @@ def load_students():
         return response.error_response(error, request.path)
 
 @bp.route('/capability_edit', methods=['PUT', 'GET'])
+@decorators.token_required
 def edit_capability():
     try:
         content = request
@@ -91,6 +92,7 @@ def edit_capability():
         response.error_response(error, request.path)
 
 @bp.route('/capability_add', methods=['POST', 'GET'])
+@decorators.token_required
 def add_capability():
     try:
         get_new = data_layer.add_capability(request)
@@ -99,6 +101,7 @@ def add_capability():
         response.error_response(error, request.path)
 
 @bp.route('/delete_skill', methods=['DELETE'])
+@decorators.token_required
 def delete_capability():
     try:
         content =request.json

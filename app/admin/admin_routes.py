@@ -9,7 +9,7 @@ email_helper = bp.email
 response = bp.response
 
 @bp.route('/all_users', methods=['GET', 'POST'])
-# @decorators.admin_required
+@decorators.admin_required
 def all_users():
     try:
         users = dataLayer.all_users('Users')
@@ -20,7 +20,7 @@ def all_users():
 
 
 @bp.route('/add_user', methods=["POST"])
-# @decorators.admin_required
+@decorators.admin_required
 def add_user():
     try:
         content = request.json
@@ -39,7 +39,7 @@ def add_user():
 
 
 @bp.route('/unblock_user', methods=["DELETE", "GET", "UPDATE"])
-# @decorators.admin_required
+@decorators.admin_required
 def unblock_user():
     try:
         email = request.json["email"]
@@ -51,7 +51,7 @@ def unblock_user():
 
 
 @bp.route('/delete_user', methods=["DELETE"])
-# @decorators.admin_required
+@decorators.admin_required
 def delete_user():
     try:
         content = request.json
