@@ -19,7 +19,7 @@ class ReturnResponse:
             response=json.dumps(msg, default=str),
             status=200,
             mimetype='application/json',
-            headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+            headers={'Access-Control-Allow-Origin': "https://hogwarts-itpazu-client.web.app",
                      'Access-Control-Allow-Credentials': "true",
                      'Access-Control-Allow-Headers':  ["Content-Type", "Authorization"],
                      })
@@ -31,7 +31,7 @@ class ReturnResponse:
             response=json.dumps(msg, default=str),
             status=200,
             mimetype='application/json',
-            headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+            headers={'Access-Control-Allow-Origin': "https://hogwarts-itpazu-client.web.app",
                      'Access-Control-Allow-Credentials': "true",
                      'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
                      'Access-Control-Expose-Headers': "Authorization", ## localserver
@@ -42,11 +42,11 @@ class ReturnResponse:
 
         response.set_cookie('token', value=token, httponly=True,
                             domain='hogwarts-itpazu.herokuapp.com',
-                            path='*', expires=datetime.utcnow() + timedelta(minutes=7), secure=True,
+                            path='*', expires=datetime.utcnow() + timedelta(minutes=2), secure=True,
                             samesite='none')
         response.set_cookie('refresh_token', value=fresh_token, httponly=True,
                             domain='hogwarts-itpazu.herokuapp.com',
-                            path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
+                            path='*', expires=datetime.utcnow() + timedelta(minutes=4), secure=True,
                             samesite='none')
         return response
 
@@ -68,7 +68,7 @@ class ReturnResponse:
         response = Response(
             status=200,
             mimetype='application/json',
-            headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+            headers={'Access-Control-Allow-Origin': "https://hogwarts-itpazu-client.web.app",
                      'Access-Control-Allow-Credentials': "true",
                      'Access-Control-Allow-Headers': ["Content-Type", "credentials", "authorization"],
                      'Access-Control-Allow-Methods': '*'}
