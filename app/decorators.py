@@ -1,8 +1,8 @@
 from app.db.Data_Layer_auth import DataLayerAuth
 from functools import wraps
-from flask import request
 from app.make_response import ReturnResponse
 from flask import request
+from app.error_handler import ClientError
 
 db = DataLayerAuth()
 reply= ReturnResponse()
@@ -19,10 +19,11 @@ class Decorators():
             else:
                 try:
                     try:
-                        print('in token required decorators')
                         content = request.json or request.form or request.args
                         cookie = request.cookies
                         csrf_token = request.headers.get('Authorization')
+                        if csrf_token is None:
+                            raise Exception("csrf token")
                         token = cookie.get('token') or request.headers.get('token')
                         user_id = content.get('_id')
                     except Exception as error:
@@ -32,8 +33,9 @@ class Decorators():
 
                 except Exception as err:
                     if str(err) == 'Signature expired':
-                        return reply.error_response("signature expired", 403)
-                    return reply.error_response("authentication failed:" + str(err), 401)
+                        raise ClientError("authentication failed", request.path, status_code=403, log=str(err))
+                    else:
+                        raise ClientError("authentication failed", request.path, status_code=401, log=str(err))
 
                 return f(*args, **kwargs)
 
@@ -53,7 +55,8 @@ class Decorators():
                         cookie = request.cookies
                         token = cookie.get('token') or request.headers.get('token')
                         user_id = content['_id']
-
+                        if csrf_token is None:
+                            raise Exception("csrf token")
                     except Exception as error:
                         raise ValueError('{} data is missing in the request'.format(str(error)))
 
@@ -63,9 +66,9 @@ class Decorators():
 
                 except Exception as err:
                     if str(err) == 'Signature expired':
-                        return reply.error_response("signature expired", 403)
-
-                    return reply.error_response("authentication failed:" + str(err), 401)
+                        raise ClientError("authentication failed", request.path, status_code=403, log=str(err))
+                    else:
+                        raise ClientError("authentication failed", request.path, status_code=401, log=str(err))
 
                 return f(*args, **kwargs)
 
@@ -88,7 +91,7 @@ class Decorators():
                 authenticated_user = db.authenticate_refresh_token(user_id, ref_token)
 
             except Exception as err:
-                return reply.error_response("authentication failed:" + str(err), 401)
+                raise ClientError("authentication failed", request.path, status_code=401, log=str(err))
 
             return f(authenticated_user, *args, **kwargs)
 

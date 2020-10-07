@@ -5,10 +5,10 @@ from config import Config
 
 
 class ConfigTests(Config):
-    MONGO_URI = 'mongodb://keeperHome:a2ce5K5RSvhrzZtx@10.150.54.176:27017/KeeperHomeTests'
-    MAIL_DEFAULT_SENDER = ('KeepersHome- tests', os.getenv('EMAIL'))
+    MONGO_URI = 'mongodb+srv://hogwartMain:Srjea3TVjAUX0M6u@cluster0.j0ehu.mongodb.net/Hogwarts-Tests?retryWrites=true&w=majority'
+    MAIL_DEFAULT_SENDER = ('Hogwarts board', os.getenv('EMAIL'))
     ENV = 'testing'
     TESTING = True
-    DEBUG=True
+    DEBUG= True
 
 

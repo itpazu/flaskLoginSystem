@@ -1,15 +1,11 @@
 from app.login import bp
-from app.decorators import Decorators
 from flask import request
-from app.db.Data_Layer_auth import DataLayerAuth
-from app.email import Email
-from app.make_response import ReturnResponse
 
-dataLayer = DataLayerAuth()
-decorators = Decorators()
-email_helper = Email()
-response = ReturnResponse()
 
+dataLayer = bp.db
+decorators = bp.decorators
+email_helper = bp.email
+response = bp.response
 
 @bp.route('/refresh_token', methods=['POST', 'GET'])
 @decorators.refresh_token_required
@@ -22,15 +18,19 @@ def refresh_token(user_dic):
         return response.response_with_token('authorized', token, fresh_token)
 
     except Exception as error:
-        return response.error_response(str(error))
+        return response.error_response({"message": "authentication failed", 'status_code': 401,
+                                     'log': 'token for user %s could not be issued. Reason: %(reason)s'
+                                            %(user_dic['_id'], str(error))}, request.path)
 
 
-@bp.route('/test', methods=['POST', 'GET'])  # base case => decorators -> dl auth ## baseCase - > login route -> dl=auth
-@decorators.token_required
-# @decorators.admin_required
+@bp.route('/test', methods=['POST', 'GET'])
+# @decorators.token_required
+@decorators.admin_required
 def test_route():
-    print('in login route tests')
-    return response.generate_response("test succeeded")
+
+    return 'success', 200
+    # raise ClientError('log this to log file', request.path , status_code=410, message='show this to client')
+
 
 
 @bp.route('/login', methods=['POST', 'OPTIONS'])
@@ -47,7 +47,7 @@ def log_in():
                 password = content['password']
 
             except Exception as error:
-                raise ValueError('{}, data is missing in the request'.format(str(error)))
+                raise Exception('%s data is missing in the request' % str(error))
 
             execute_login = dataLayer.log_user(email, password)
 
@@ -57,19 +57,27 @@ def log_in():
                 keys = execute_login.keys()
                 new_dic = {key: execute_login[key] for key in keys if key != "token" and key != "refresh_token" and
                            key != "csrf_token"}
-
                 return response.response_with_token(new_dic, execute_login["token"], execute_login["refresh_token"],
                                                     execute_login["csrf_token"])
 
             else:
+                default_message = 'login failed check your credentials. A password reset might have been sent to' \
+                                  'your account, or issue a password reset request now. Alternatively, turn to your admin'
                 failed_email = dataLayer.log_attempt(email)
                 if failed_email["attempts"] == 5:
                     dataLayer.block_current_password(email)
-                    new_pass = solicit_new_pass()
-                    if new_pass.status == 401:
-                        raise Exception(new_pass.response)
-                    else:
-                        raise Exception('too many failed attempts, a password reset has been sent to your email.')
+                    user_dic = dataLayer.solicit_new_password(email)
+                    token = user_dic['token']
+                    user_id = user_dic['_id']
+                    try:
+                        email_helper.send_password_by_mail(email, user_id, token)
+                    except Exception as error:
+                        raise Exception(error.args[0])
+                    raise Exception({"message": default_message, 'status_code': 401,
+                                     'log': " an email was sent to reset password for account %s, "
+                                            "due to %d unsuccessful login attempts"
+                                            % (email, failed_email['attempts'])})
+
                 elif failed_email["attempts"] == 10:
                     dataLayer.block_current_password(email, True)
                     try:
@@ -77,16 +85,25 @@ def log_in():
                         recipients = [admin.get("email") for admin in admin_emails]
                         email_helper.notify_admins(email, recipients)
                     except Exception as error:
-                        raise Exception(str(error))
-                    raise Exception("user is blocked")
+                        response.log_error('failed to notify admins: %s' % (str(error)), request.path)
+                        pass
+                    raise Exception({"message": default_message, 'status_code': 401,
+                                     'log': "%s, account has been blocked due to %d unsuccessful login attempts"
+                                            % (email, failed_email['attempts'])})
                 elif failed_email["attempts"] > 10 and failed_email["attempts"] % 5 == 0:
                     dataLayer.block_current_password(email)
-                    raise Exception("user is blocked. Turn to your main")
+                    raise Exception({"message": default_message, 'status_code': 401,
+                                     'log': "%s, is blocked, password is changed automatically every 5 "
+                                            "additional attempts. current count: %d unsuccessful login attempts"
+                                            % (email, failed_email['attempts'])})
                 else:
-                    raise Exception('password is incorrect')
-
+                    ## don't provide "log" entry in the dictionary, but provide status code to avoid logging the error!
+                    raise Exception({'message': default_message,
+                                     'status_code': 401})
         except Exception as error:
-            return response.error_response(str(error))
+            return response.error_response(error, request.path)
+
+
 
 
 @bp.route('/check_token', methods=['GET', 'POST', 'OPTIONS'])
@@ -104,9 +121,9 @@ def check_token_for_pass_reset():
 
             dataLayer.authenticate_user(user_id, token)
 
-            return response.generate_response('token approved')
+            return response.generate_response('approved')
         except Exception as error:
-            return response.error_response(str(error))
+            return response.error_response(error, request.path)
 
 
 @bp.route('/change_password', methods=["POST"])
@@ -118,25 +135,29 @@ def change_password():
         return response.generate_response("Password has been changed successfully:" + changed_password)
 
     except Exception as error:
-        response.error_response(str(error))
+        response.error_response(error, request.path)
 
 
 @bp.route('/newpass_solicit', methods=['GET', 'POST'])
 def solicit_new_pass():
     try:
+        try:
+            email = request.json['email']
+        except Exception as error:
+            raise Exception({'message':'email is missing in the request'})
 
-        email = request.json['email']
-        if email is None:
-            raise Exception('{} data is missing in the request')
         user_dic = dataLayer.solicit_new_password(email)
         if user_dic is None:
-            raise Exception('user does not exist in db')
+            raise Exception({"message": "password could not be reset, turn to your admin", 'status_code': 401,
+             'log': "user %s does not exist in db" % email})
 
         token = user_dic['token']
         user_id = user_dic['_id']
+
         sent_email = email_helper.send_password_by_mail(email, user_id, token)
 
         return response.response_with_headers(sent_email)
 
     except Exception as error:
-        response.error_response(str(error))
+        return response.error_response(error, request.path)
+

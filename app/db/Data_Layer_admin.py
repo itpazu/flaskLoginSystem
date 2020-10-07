@@ -8,28 +8,8 @@ class DataLayerAdmin(DataLayer):
     def __init__(self):
         super().__init__()
         self.__db = self.get_db()
+        self.users_collection = self.__db.Users
 
-    def all_users(self):
-        try:
-            users = self.__db.Users.find()
-            all_users_list = []
-
-            for i in users:
-                all_users_list.append(i)
-
-            return all_users_list
-        except Exception as e:
-            raise Exception('db update failed: {} '.format(str(e)))
-
-    def get_doc_by_email(self, email):
-        try:
-            user_dict = self.__db.Users.find_one({"email": email})
-            if user_dict:
-                return user_dict
-            else:
-                return None
-        except Exception as error:
-            raise Exception(str(error))
 
     def get_admins(self):
         try:
@@ -38,16 +18,6 @@ class DataLayerAdmin(DataLayer):
         except Exception as error:
             raise Exception("failed to get admins: {}".format(str(error)))
 
-    def get_doc_by_user_id(self, user_id):
-        try:
-            user_dict = self.__db.Users.find_one({"_id": user_id}, {"creation_time": 0})
-
-            if user_dict:
-                return user_dict
-            else:
-                return None
-        except Exception as error:
-            raise Exception(str(error))
 
     def add_user(self, content, conf=None):
         try:
@@ -57,17 +27,16 @@ class DataLayerAdmin(DataLayer):
             email = content['email']
             role = content['role']
             user_id = generate_id()
-            check_if_user_exists = self.__db.Users.find_one({"$or": [{"email": email}, {"_id": user_id}]})
-            if check_if_user_exists is not None:
-                raise ValueError('user already exists!')
+            password = self.encrypt_pass(secrets.token_hex()) if conf is None else self.encrypt_pass('12345678')
+            token = encode_token(user_id, password, role)
+            new_user = User(user_id, last_name, first_name, email, password, role, token)
+            insert_new = self.users_collection.update({"email": email},
+                                                {"$setOnInsert": (new_user.__dict__)}, upsert=True)
+            if 'upserted' in insert_new:
+                return self.get_doc_by_user_id('Users', insert_new['upserted'])
             else:
-                password = self.encrypt_pass(secrets.token_hex()) if conf is None else self.encrypt_pass('12345678')
-                token = encode_token(user_id, password, role)
-                new_user = User(user_id, last_name, first_name, email, password, role, token)
-                self.__db.Users.insert_one(new_user.__dict__)
+                raise Exception('user already exists!')
 
-                added_user = self.get_doc_by_email(email)
-                return added_user
         except Exception as error:
             raise error
 
@@ -77,42 +46,10 @@ class DataLayerAdmin(DataLayer):
             if deleted.deleted_count > 0:
                 deleted = {"status": 'The user has been deleted!'}
                 return deleted
-            else:
-                raise ValueError('The user is not in the system!')
-        except ValueError as error:
-            raise error
 
-    def make_admin(self, _id):
-        try:
-            if self.__db.Users.find_one({"_id": _id}):
-                if self.__db.Users.find_one({"_id": _id, "role": 'main'}):
-                    self.__db.Users.find_one_and_update({"_id": _id}, {"$set": {"role": 'main',
-                                                                                "last_update_time":
-                                                                                    User.updated_at()}})
-                    added_admin = {'status': 'The user is now an main!'}
-                    return added_admin
-                else:
-                    raise ValueError('The user is already an main!')
-            else:
-                raise ValueError('The user does not exist!')
-        except ValueError as error:
-            raise error
+        except Exception as error:
+            raise Exception ({"message": "delete failed", "log": error, "status_code" : 400})
 
-    def demote_admin(self, _id):
-        try:
-            if self.__db.Users.find_one({"_id": _id}):
-                if self.__db.Users.find_one({"_id": _id, "role": 'main'}):
-                    self.__db.Users.find_one_and_update({"_id": _id}, {"$set": {"role": 'main',
-                                                                                "last_update_time":
-                                                                                    User.updated_at()}})
-                    removed_admin = {'status': 'The user is no longer an main!'}
-                    return removed_admin
-                else:
-                    raise ValueError('The user is not an main!')
-            else:
-                raise ValueError('The user does not exist!')
-        except ValueError as error:
-            raise error
 
     def change_email(self, _id):
         email = request.get_json()['email']
@@ -156,7 +93,6 @@ class DataLayerAdmin(DataLayer):
                 self.__db.Users.find_one_and_update({"email": email}, {"$set": {"password": password,
                                                                                 "last_update_time": User.updated_at()}})
             else:
-
                 password = self.encrypt_pass(secrets.token_hex())
                 self.__db.Users.find_one_and_update({"email": email}, {"$set": {"password": password,
                                                                                 "last_update_time": User.updated_at(),

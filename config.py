@@ -14,6 +14,6 @@ class Config(object):
     MAIL_PORT = os.getenv('MAIL_PORT')
     MAIL_USE_TLS = False
     MAIL_USE_SSL = True
-    MAIL_DEFAULT_SENDER = ('KeepersHome', os.getenv('EMAIL'))
-    TESTING = False
-    ENV = 'development'
+    MAIL_DEFAULT_SENDER = ('Hogwarts', os.getenv('EMAIL'))
+    ENV = os.getenv('ENV')
+    TESTING= False

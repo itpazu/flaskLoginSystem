@@ -1,5 +1,6 @@
-from flask import Blueprint
+from app.bp_constructor import construct_bp
+from app.db.Data_Layer_auth import DataLayerAuth
 
-bp = Blueprint('login', __name__)
+bp = construct_bp('login', DataLayerAuth)
 
 from app.login import login_routes

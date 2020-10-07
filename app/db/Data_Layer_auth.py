@@ -10,10 +10,9 @@ class DataLayerAuth(DataLayerAdmin):
     def __init__(self):
         super().__init__()
         self.__db = self.get_db()
-        # print(self.__db)
 
     def log_user(self, email, password):
-        verify_user_exists = self.get_doc_by_email(email)
+        verify_user_exists = self.get_doc_by_email('Users', email)
         if verify_user_exists is None:
             raise ValueError('email does not exist in db')
         else:
@@ -30,7 +29,7 @@ class DataLayerAuth(DataLayerAdmin):
                 return user_dic
 
     def authenticate_user(self, user_id, token, csrf_token=None):
-        user_from_db = self.get_doc_by_user_id(user_id)
+        user_from_db = self.get_doc_by_user_id('Users', user_id)
         if user_from_db is None:
             raise ValueError('identification failed, user_id is either missing or incorrect')
 
@@ -40,7 +39,7 @@ class DataLayerAuth(DataLayerAdmin):
             decoded_token = decode_token(token, user_id, pass_from_db)
 
         except Exception as error:
-            raise Exception(error)
+            raise error
 
         if user_id != decoded_token['_id']:
             raise Exception('ID do not match. please log in again')
@@ -54,7 +53,7 @@ class DataLayerAuth(DataLayerAdmin):
 
     def authenticate_refresh_token(self, user_id, refresh_token):
         try:
-            user_dic = self.get_doc_by_user_id(user_id)
+            user_dic = self.get_doc_by_user_id('Users', user_id)
             if user_dic is None:
                 raise ValueError('identification failed, user_id is either missing or incorrect')
             password = user_dic['password']
@@ -81,20 +80,22 @@ class DataLayerAuth(DataLayerAdmin):
 
     def solicit_new_password(self, email):
         try:
-            user_dic = self.get_doc_by_email(email)
+            user_dic = self.get_doc_by_email('Users', email)
+            print(user_dic)
             if user_dic is None:
                 return None
             attempts = self.get_attempts(email)
 
             if attempts is not None and attempts["attempts"] >= 10:
-                raise Exception('user is blocked. Turn to an admin')
+                raise Exception({"message": "password could not be reset. turn to an admin",
+                                 "log": "user %s is blocked due to  %d unsuccessful login attempts"
+                                        % (email, attempts["attempts"]), "status_code": 401})
 
             password = user_dic['password']
             user_id = user_dic['_id']
             role = user_dic['role']
 
             reset_token = encode_token(user_id, password, role)
-
             new_user_dic = self.store_reset_token(user_id, reset_token)
 
             return new_user_dic
