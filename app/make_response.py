@@ -31,7 +31,7 @@ class ReturnResponse:
             response=json.dumps(msg, default=str),
             status=200,
             mimetype='application/json',
-            headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+            headers={'Access-Control-Allow-Origin': "http://localhost:3000/",
                      'Access-Control-Allow-Credentials': "true",
                      'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
                      # 'Access-Control-Expose-Headers': "Authorization", ## localserver
