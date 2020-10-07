@@ -41,11 +41,11 @@ class ReturnResponse:
                      })
 
         response.set_cookie('token', value=token, httponly=True,
-                            domain='https://hogwarts-itpazu.herokuapp.com',
+                            domain='hogwarts-itpazu.herokuapp.com',
                             path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
                             samesite='none')
         response.set_cookie('refresh_token', value=fresh_token, httponly=True,
-                            domain='https://hogwarts-itpazu.herokuapp.com',
+                            domain='hogwarts-itpazu.herokuapp.com',
                             path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
                             samesite='none')
         return response

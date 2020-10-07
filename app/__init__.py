@@ -27,7 +27,7 @@ def create_app(config_class= Config):
         client.init_app(app, connect=True, authSource="admin", username='keeperHomeTester',
                         password='flasktests12345')
 
-    CORS(app, supports_credentials=True, resources={r"/*": {"origins": "https://hogwarts-itpazu.herokuapp.com"}})
+    CORS(app, supports_credentials=True, resources={r"/*": {"origins": "hogwarts-itpazu.herokuapp.com"}})
 
 
     from app.main import bp as main_bp
