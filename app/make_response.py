@@ -21,7 +21,7 @@ class ReturnResponse:
             mimetype='application/json',
             headers={'Access-Control-Allow-Origin': "http://localhost:3000",
                      'Access-Control-Allow-Credentials': "true",
-                     'Access-Control-Allow-Headers': "Content-Type",
+                     'Access-Control-Allow-Headers':  ["Content-Type", "Authorization"],
                      })
 
     @staticmethod
@@ -42,7 +42,7 @@ class ReturnResponse:
 
         response.set_cookie('token', value=token, httponly=True,
                             domain='hogwarts-itpazu.herokuapp.com',
-                            path='*', expires=datetime.utcnow() + timedelta(minutes=10), secure=True,
+                            path='*', expires=datetime.utcnow() + timedelta(minutes=7), secure=True,
                             samesite='none')
         response.set_cookie('refresh_token', value=fresh_token, httponly=True,
                             domain='hogwarts-itpazu.herokuapp.com',
@@ -68,7 +68,8 @@ class ReturnResponse:
         response = Response(
             status=200,
             mimetype='application/json',
-            headers={'Access-Control-Allow-Origin': "http://localhost:3000", 'Access-Control-Allow-Credentials': "true",
+            headers={'Access-Control-Allow-Origin': "http://localhost:3000",
+                     'Access-Control-Allow-Credentials': "true",
                      'Access-Control-Allow-Headers': ["Content-Type", "credentials", "authorization"],
                      'Access-Control-Allow-Methods': '*'}
 
