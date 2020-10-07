@@ -1,14 +1,11 @@
 from app.login import bp
-from app.decorators import Decorators
-from flask import request, abort
-from app.db.Data_Layer_auth import DataLayerAuth
-from app.email import Email
-from app.make_response import ReturnResponse
+from flask import request
 
-dataLayer = DataLayerAuth()
-decorators = Decorators()
-email_helper = Email()
-response = ReturnResponse()
+
+dataLayer = bp.db
+decorators = bp.decorators
+email_helper = bp.email
+response = bp.response
 
 @bp.route('/refresh_token', methods=['POST', 'GET'])
 @decorators.refresh_token_required
@@ -126,7 +123,7 @@ def check_token_for_pass_reset():
 
             return response.generate_response('approved')
         except Exception as error:
-            return response.error_response(str(error), request.path)
+            return response.error_response(error, request.path)
 
 
 @bp.route('/change_password', methods=["POST"])
@@ -147,7 +144,7 @@ def solicit_new_pass():
         try:
             email = request.json['email']
         except Exception as error:
-            raise Exception('email is missing in the request')
+            raise Exception({'message':'email is missing in the request'})
 
         user_dic = dataLayer.solicit_new_password(email)
         if user_dic is None:

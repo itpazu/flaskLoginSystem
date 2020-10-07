@@ -7,7 +7,6 @@ from flask_pymongo import PyMongo
 from config import Config
 import logging
 from logging.handlers import RotatingFileHandler
-import boto3
 
 
 bcrypt = Bcrypt()
@@ -22,7 +21,6 @@ def create_app(config_class= Config):
     bcrypt.init_app(app)
     mail.init_app(app)
     if app.config['ENV'] == 'development':
-
         client.init_app(app, connect=True, authSource="admin", username=os.getenv('DB_USER_NAME'),
                         password=os.getenv('DB_PASSWORD'))
     else:

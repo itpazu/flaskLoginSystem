@@ -1,15 +1,8 @@
 import datetime
+from .base_class import BaseClass
 
+class User(BaseClass):
 
-class User:
-
-    @staticmethod
-    def created_at():
-        return datetime.datetime.now().date().isoformat()
-
-    @staticmethod
-    def updated_at():
-        return datetime.datetime.now().isoformat()
 
     def __init__(self, _id, last_name, first_name, email, password, role, token=None):
 
@@ -19,7 +12,7 @@ class User:
         self.email = str(email)
         self.password = str(password)
         self.role = role
-        self.creation_time = self.created_at()
+        self.creation_time = self.updated_at()
         self.last_update_time = self.updated_at()
         if token is not None:
             self.token = token

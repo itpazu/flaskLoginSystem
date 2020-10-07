@@ -2,11 +2,11 @@ from app.main import bp
 from flask import request
 import requests
 import time
-from app.make_response import ReturnResponse
-from app.decorators import Decorators
 from datetime import datetime, timedelta
-decorators = Decorators()
-response = ReturnResponse()
+
+data_layer = bp.db
+decorators = bp.decorators
+response = bp.response
 
 @bp.route('/', methods=['POST', 'GET'])
 def health_check_aws():
@@ -34,8 +34,8 @@ def change_vip_status():
         costumer_id = request.json.get('costumer_id')
         expiration_time = request.json.get('expirationDate')
         if expiration_time is not None:
-            expiration_date = expiration_time
-            year_time = datetime.strptime(expiration_date, "%Y-%m-%d") + timedelta(days=365)
+
+            year_time = datetime.strptime(expiration_time, "%Y-%m-%d") + timedelta(days=365)
 
         else:
             year_time = datetime.now() + timedelta(days=365)
@@ -49,9 +49,61 @@ def change_vip_status():
         costumer_details = change_status.json()
         if costumer_details is not None:
             return response.generate_response(costumer_details)
-        raise Exception(response.error_response("not found"))
+        raise Exception(response.error_response("not found", request.path))
     except Exception as error:
-        return response.error_response(str(error))
+        return response.error_response(error, request.path)
+
+@bp.route('/add_student', methods=['GET', 'POST', 'OPTIONS'])
+# @decorators.token_required
+def add_new_student():
+    if request.method == "OPTIONS":
+        return response.build_cors_preflight_response()
+    try:
+
+        try:
+            content = request.json
+        except Exception as error:
+            raise Exception('{} data is missing'.format(error))
+
+        student_obj = data_layer.add_student(content)
+        return response.generate_response('user {} has been added successfully'.format(student_obj['_id']))
+
+    except Exception as error:
+        return response.error_response(error, request.path)
 
 
+@bp.route('/students',  methods=['GET'])
+# @decorators.token_required
+def load_students():
+    try:
+        load = data_layer.all_users('Students')
+        return response.generate_response(load)
+    except Exception as error:
+        return response.error_response(error, request.path)
 
+@bp.route('/capability_edit', methods=['PUT', 'GET'])
+def edit_capability():
+    try:
+        content = request
+        store = data_layer. edit_capability(content)
+        return response.generate_response(store)
+    except Exception as error:
+        response.error_response(error, request.path)
+
+@bp.route('/capability_add', methods=['POST', 'GET'])
+def add_capability():
+    try:
+        get_new = data_layer.add_capability(request)
+        return response.generate_response(get_new)
+    except Exception as error:
+        response.error_response(error, request.path)
+
+@bp.route('/delete_skill', methods=['DELETE'])
+def delete_capability():
+    try:
+        content =request.json
+        print(content)
+        resp = data_layer.delete_student(request)
+        return response.generate_response(resp)
+    except Exception as error:
+        response.error_response(error, request.path)

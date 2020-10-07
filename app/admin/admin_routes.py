@@ -1,30 +1,26 @@
 from flask import request, current_app
 from app.admin import bp
-from app.db.Data_Layer_admin import DataLayerAdmin
-from app.decorators import Decorators
-from app.email import Email
 from app.login.login_routes import solicit_new_pass
-from app.make_response import ReturnResponse
 
-dataLayer = DataLayerAdmin()
-decorators = Decorators()
-email_helper = Email()
-response = ReturnResponse()
 
+dataLayer = bp.db
+decorators = bp.decorators
+email_helper = bp.email
+response = bp.response
 
 @bp.route('/all_users', methods=['GET', 'POST'])
-@decorators.admin_required
+# @decorators.admin_required
 def all_users():
     try:
-        users = dataLayer.all_users()
+        users = dataLayer.all_users('Users')
         return response.generate_response({"users": users})
 
     except Exception as error:
-        return response.error_response(str(error))
+        return response.error_response(error, request.path)
 
 
 @bp.route('/add_user', methods=["POST"])
-@decorators.admin_required
+# @decorators.admin_required
 def add_user():
     try:
         content = request.json
@@ -39,11 +35,11 @@ def add_user():
         return response.response_with_headers(sent_mail)
 
     except Exception as error:
-        return response.error_response(str(error))
+        return response.error_response(error, request.path)
 
 
 @bp.route('/unblock_user', methods=["DELETE", "GET", "UPDATE"])
-@decorators.admin_required
+# @decorators.admin_required
 def unblock_user():
     try:
         email = request.json["email"]
@@ -51,11 +47,11 @@ def unblock_user():
         dataLayer.delete_block_field(email)
         return solicit_new_pass()
     except Exception as error:
-        return response.error_response('unblocking user failed: {}'.format(str(error)))
+        return response.error_response('unblocking user failed: {}'.format(str(error)), request.path)
 
 
 @bp.route('/delete_user', methods=["DELETE"])
-@decorators.admin_required
+# @decorators.admin_required
 def delete_user():
     try:
         content = request.json
@@ -66,29 +62,6 @@ def delete_user():
         return response.error_response('Delete failed: {}'.format(str(e)))
 
 
-@bp.route('/make_admin/<string:_id>', methods=["POST"])
-def make_admin(_id):
-    try:
-        new_admin = dataLayer.make_admin(_id)
-        return response.generate_response(new_admin)
-    except Exception as e:
-        return response.error_response((str(e)))
 
 
-@bp.route('/demote_admin/<string:_id>', methods=["POST"])
-def demote_admin(_id):
-    try:
-        demoted_admin = dataLayer.demote_admin(_id)
-        return response.generate_response(demoted_admin)
 
-    except Exception as e:
-        return response.error_response((str(e)))
-
-
-@bp.route('/change_email/<string:_id>', methods=["POST"])
-def change_email(_id):
-    try:
-        changed_email = dataLayer.change_email(_id)
-        return response.generate_response(changed_email)
-    except Exception as e:
-        return response.error_response((str(e)))
