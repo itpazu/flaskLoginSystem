@@ -21,7 +21,8 @@ class ReturnResponse:
             mimetype='application/json',
             headers={'Access-Control-Allow-Origin': "https://hogwarts-itpazu-client.web.app",
                      'Access-Control-Allow-Credentials': "true",
-                     'Access-Control-Allow-Headers':  ["Content-Type", "Authorization"],
+                     'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
+                     'Access-Control-Expose-Headers': "Authorization",
                      })
 
     @staticmethod
@@ -34,18 +35,18 @@ class ReturnResponse:
             headers={'Access-Control-Allow-Origin': "https://hogwarts-itpazu-client.web.app",
                      'Access-Control-Allow-Credentials': "true",
                      'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
-                     'Access-Control-Expose-Headers': "Authorization", ## localserver
+                     'Access-Control-Expose-Headers': "Authorization",
                      "Authorization": csrf_token if csrf_token is not None else None,
 
 
                      })
 
         response.set_cookie('token', value=token, httponly=True,
-                            domain='hogwarts-itpazu.herokuapp.com/',
+                            domain='hogwarts-itpazu.herokuapp.com',
                             path='*', expires=datetime.utcnow() + timedelta(minutes=2), secure=True,
                             samesite='none')
         response.set_cookie('refresh_token', value=fresh_token, httponly=True,
-                            domain='hogwarts-itpazu.herokuapp.com/',
+                            domain='hogwarts-itpazu.herokuapp.com',
                             path='*', expires=datetime.utcnow() + timedelta(minutes=4), secure=True,
                             samesite='none')
         return response
