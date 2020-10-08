@@ -64,6 +64,7 @@ class ReturnResponse:
         raise ClientError(str(err), path, status_code=status, log=log)
         # return Response(response=json.dumps(error), status=status, mimetype='application/json')
 
+
     @staticmethod
     def build_cors_preflight_response():
         response = Response(
