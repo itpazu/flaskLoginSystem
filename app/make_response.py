@@ -1,7 +1,7 @@
 from flask import json, Response
 from datetime import datetime, timedelta
 from app.error_handler import ClientError
-
+import os
 class ReturnResponse:
 
     @staticmethod
@@ -19,7 +19,7 @@ class ReturnResponse:
             response=json.dumps(msg, default=str),
             status=200,
             mimetype='application/json',
-            headers={'Access-Control-Allow-Origin': "https://hogwarts-itpazu-client.web.app",
+            headers={'Access-Control-Allow-Origin':  os.getenv('CLIENT'),
                      'Access-Control-Allow-Credentials': "true",
                      'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
                      'Access-Control-Expose-Headers': "Authorization",
@@ -32,7 +32,7 @@ class ReturnResponse:
             response=json.dumps(msg, default=str),
             status=200,
             mimetype='application/json',
-            headers={'Access-Control-Allow-Origin': "https://hogwarts-itpazu-client.web.app",
+            headers={'Access-Control-Allow-Origin':  os.getenv('CLIENT'),
                      'Access-Control-Allow-Credentials': "true",
                      'Access-Control-Allow-Headers': ["Content-Type", "Authorization"],
                      'Access-Control-Expose-Headers': "Authorization",
@@ -69,7 +69,7 @@ class ReturnResponse:
         response = Response(
             status=200,
             mimetype='application/json',
-            headers={'Access-Control-Allow-Origin': "https://hogwarts-itpazu-client.web.app",
+            headers={'Access-Control-Allow-Origin':  os.getenv('CLIENT'),
                      'Access-Control-Allow-Credentials': "true",
                      'Access-Control-Allow-Headers': ["Content-Type", "credentials", "authorization"],
                      'Access-Control-Allow-Methods': '*'}

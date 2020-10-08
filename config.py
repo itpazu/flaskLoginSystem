@@ -17,3 +17,4 @@ class Config(object):
     MAIL_DEFAULT_SENDER = ('Hogwarts', os.getenv('EMAIL'))
     ENV = os.getenv('ENV')
     TESTING= False
+    CLIENT_URL = os.getenv('CLIENT')
