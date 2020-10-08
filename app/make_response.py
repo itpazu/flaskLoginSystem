@@ -72,7 +72,7 @@ class ReturnResponse:
             mimetype='application/json',
             headers={'Access-Control-Allow-Origin':  os.getenv('CLIENT'),
                      'Access-Control-Allow-Credentials': "true",
-                     'Access-Control-Allow-Headers': ["Content-Type", "credentials", "authorization"],
+                     'Access-Control-Allow-Headers': ["Content-Type", "credentials", "authorization", "token"],
                      'Access-Control-Allow-Methods': '*'}
 
         )

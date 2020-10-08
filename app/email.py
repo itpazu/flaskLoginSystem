@@ -1,7 +1,7 @@
 from flask import render_template
 from flask_mail import Message
 from app import mail
-
+import os
 
 class Email():
 
@@ -20,7 +20,7 @@ class Email():
     @staticmethod
     def send_password_by_mail(email_address, user_id, token):
         try:
-            url = 'http://keepershomeclient.s3-website.eu-central-1.amazonaws.com/change_pass/path?id=' + user_id + '&token=' + token
+            url = f'{os.getenv("CLIENT")}/change_pass/path?id=' + user_id + '&token=' + token
 
             msg = Message('Reset Password', recipients=[email_address])
             msg.body = render_template('reset_password.txt', url=url)

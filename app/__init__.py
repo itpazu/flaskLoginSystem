@@ -19,6 +19,7 @@ def create_app(config_class= Config):
 
     app.config.from_object(config_class)
     bcrypt.init_app(app)
+    print(app.config)
     mail.init_app(app)
     if app.config['ENV'] == 'development':
         client.init_app(app, connect=True, authSource="admin", username=os.getenv('DB_USER_NAME'),
