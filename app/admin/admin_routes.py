@@ -8,12 +8,12 @@ decorators = bp.decorators
 email_helper = bp.email
 response = bp.response
 
-@bp.route('/all_users', methods=['GET', 'POST'])
+@bp.route('/all_users', methods=['GET'])
 @decorators.admin_required
 def all_users():
     try:
         users = dataLayer.all_users('Users')
-        return response.generate_response({"users": users})
+        return response.generate_response(users)
 
     except Exception as error:
         return response.error_response(error, request.path)

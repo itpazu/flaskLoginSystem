@@ -51,8 +51,7 @@ class DataLayer:
     def all_users(self, collection):
         try:
             db_collection = getattr(self.__db, collection)
-            users = db_collection.find()
-            print(users)
+            users = db_collection.find({ }, { "csrf_token": 0, "token": 0, "refresh_token": 0, "password": 0 })
 
             all_users_list = list(users)
             if len(all_users_list) == 0:

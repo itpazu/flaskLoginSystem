@@ -14,7 +14,8 @@ class DataLayerAuth(DataLayerAdmin):
     def log_user(self, email, password):
         verify_user_exists = self.get_doc_by_email('Users', email)
         if verify_user_exists is None:
-            raise ValueError('email does not exist in db')
+            raise Exception({"message": 'login failed', 'status_code': 401,
+                                     'log': "email does not exist in data base"})
         else:
             db_password = verify_user_exists["password"]
             compare_pass = self.match_password(db_password, password)
