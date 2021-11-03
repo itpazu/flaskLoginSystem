@@ -42,9 +42,9 @@ def change_vip_status():
 
         end_time = time.mktime(year_time.timetuple()) * 1000
         end= end_time
-        url = f"https://stage-api.keeperschildsafety.net/admin/fixed-vip/{costumer_id}"
+        url = f""
         payload = {"end": int(end)}
-        headers = {"Auth-Token": "c95ddcc4-ad89-45a0-bcbe-3c10eb620f640147fa5e-c25d-4b65-abf1-071820fb1270"}
+        headers = {"Auth-Token": ""}
         change_status = requests.put(url, params=payload, headers=headers)
         costumer_details = change_status.json()
         if costumer_details is not None:
