@@ -82,7 +82,6 @@ class DataLayerAuth(DataLayerAdmin):
     def solicit_new_password(self, email):
         try:
             user_dic = self.get_doc_by_email('Users', email)
-            print(user_dic)
             if user_dic is None:
                 return None
             attempts = self.get_attempts(email)
