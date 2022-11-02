@@ -1,12 +1,9 @@
-
-# Distribution / packaging
 .Python
 build/
 
-# Flask stuff:
-instance/
-.webassets-cache
 
 # Environments
 .env
 venv/
+logs/
+Procfile
