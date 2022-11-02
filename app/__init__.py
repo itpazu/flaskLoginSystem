@@ -42,9 +42,9 @@ def create_app(config_class= Config):
     from app.users_profile import bp as profile_bp
     app.register_blueprint(profile_bp)
 
-    if not os.path.exists('logs'):
-        os.mkdir('logs')
-    file_handler = RotatingFileHandler('logs/keepersHomeServer.log',
+    if not os.path.exists('loggings'):
+        os.mkdir('loggings')
+    file_handler = RotatingFileHandler('loggings/logs.log',
                                        maxBytes=10240, backupCount=10)
     file_handler.setFormatter(logging.Formatter(
         '%(asctime)s %(levelname)s: %(message)s'
