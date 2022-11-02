@@ -19,14 +19,10 @@ def create_app(config_class= Config):
     app.config.from_object(config_class)
     bcrypt.init_app(app)
     mail.init_app(app)
-    if app.config['ENV'] == 'development':
-        client.init_app(app, connect=True, authSource="admin", username=os.getenv('DB_USER_NAME'),
-                        password=os.getenv('DB_PASSWORD'))
-    else:
-        client.init_app(app, connect=True, authSource="admin", username='keeperHomeTester',
-                        password='flasktests12345')
-
-
+    
+    client.init_app(app, connect=True, authSource="admin", username=os.getenv('DB_USER_NAME'),
+                    password=os.getenv('DB_PASSWORD'))
+       
     CORS(app, supports_credentials=True, resources={r"/*": {"origin": os.getenv('CLIENT')}})
 
 
